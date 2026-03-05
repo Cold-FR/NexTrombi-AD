@@ -87,7 +87,7 @@ export default function PhotoUploadModal({ isOpen, onClose, user, onSave }: Phot
                                 Sélectionner un fichier
                             </label>
                             <input
-                                className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-900 hover:file:bg-gray-200 dark:file:bg-gray-600 dark:file:text-white dark:hover:file:bg-gray-500 transition-all"
+                                className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 transition-colors"
                                 id="file_input"
                                 type="file"
                                 accept="image/png, image/jpeg, image/webp"
