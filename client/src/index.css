@@ -1,0 +1,26 @@
+@import "tailwindcss";
+@plugin "flowbite/plugin";
+
+@theme {
+  /* Vos couleurs personnalisées "Teal" du projet formulaire-ad */
+  --color-primary-50: #f0fdfa;
+  --color-primary-100: #ccfbf1;
+  --color-primary-200: #99f6e4;
+  --color-primary-300: #5eead4;
+  --color-primary-400: #2dd4bf;
+  --color-primary-500: #14b8a6;
+  --color-primary-600: #0d9488;
+  --color-primary-700: #0f766e;
+  --color-primary-800: #115e59;
+  --color-primary-900: #134e4a;
+  --color-primary-950: #042f2e;
+
+  /* Police (si vous l'installez plus tard) */
+  --font-sans: "Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica Neue", "Arial", "sans-serif";
+}
+
+@layer base {
+  body {
+    @apply h-full bg-gray-50 dark:bg-gray-900;
+  }
+}
