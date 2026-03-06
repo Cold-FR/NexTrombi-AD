@@ -1,0 +1,11 @@
+# grumphp.yml
+grumphp:
+    tasks:
+        phpcsfixer:
+            config: '.php-cs-fixer.dist.php'
+            allow_risky: true
+        phpstan:
+            configuration: 'phpstan.dist.neon'
+            level: 8
+        twigcs: ~
+        yamllint: ~
