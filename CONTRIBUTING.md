@@ -4,7 +4,6 @@ Merci de votre intérêt pour **NexTrombi-AD** ! Ce guide vous explique comment 
 
 ## 📋 Table des matières
 
-- [Code de conduite](#-code-de-conduite)
 - [Prérequis](#-prérequis)
 - [Mise en place de l'environnement](#-mise-en-place-de-lenvironnement)
 - [Workflow de contribution](#-workflow-de-contribution)
