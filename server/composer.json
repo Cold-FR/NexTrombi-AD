@@ -22,6 +22,7 @@
     "config": {
         "allow-plugins": {
             "php-http/discovery": true,
+            "phpro/grumphp": true,
             "phpstan/extension-installer": true,
             "symfony/flex": true,
             "symfony/runtime": true
@@ -113,6 +114,7 @@
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.94",
+        "phpro/grumphp": "^2.19",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-doctrine": "^2.0",
