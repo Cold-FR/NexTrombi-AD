@@ -6,6 +6,5 @@ grumphp:
             allow_risky: true
         phpstan:
             configuration: 'phpstan.dist.neon'
-            level: 8
         twigcs: ~
         yamllint: ~
