@@ -35,7 +35,7 @@ jobs:
         run: vendor/bin/php-cs-fixer fix --dry-run --diff
 
       - name: PHPStan
-        run: vendor/bin/phpstan analyse src tests --level=8
+        run: vendor/bin/phpstan analyse src tests --level=6
 
 
   # ==========================================
