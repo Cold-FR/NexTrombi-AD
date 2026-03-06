@@ -41,7 +41,9 @@ export default function App() {
 
   // --- LOGIQUE DE L'INFINITE SCROLL ---
   useEffect(() => {
-    // L'observateur regarde si notre balise cible (en bas) rentre dans l'écran
+    // On fige l'élément actuel dans une constante
+    const currentElement = observerTarget.current;
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
@@ -52,13 +54,14 @@ export default function App() {
       { threshold: 0.1 } // Se déclenche dès qu'on voit 10% de la balise
     );
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+    if (currentElement) {
+      observer.observe(currentElement);
     }
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+      // Lors du nettoyage, on utilise notre constante figée (qui contient toujours la balise)
+      if (currentElement) {
+        observer.unobserve(currentElement);
       }
     };
   }, [observerTarget, visibleUsers.length, filteredUsers.length]);
