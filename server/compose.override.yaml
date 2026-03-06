@@ -1,0 +1,19 @@
+
+services:
+  ###> doctrine/doctrine-bundle ###
+  # Database configuration is in compose.yaml
+  ###< doctrine/doctrine-bundle ###
+
+  ###< phpmyadmin ###
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    ports:
+      - "7080:80"
+    environment:
+      PMA_HOST: database
+      PMA_PORT: 3306
+      PMA_USER: ${MYSQL_USER:-app}
+      PMA_PASSWORD: ${MYSQL_PASSWORD:-!ChangeMe!}
+    depends_on:
+      - database
+  ###< phpmyadmin ###
