@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,html}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,html}\""
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,html}\"",
+    "prepare": "cd .. && husky client/.husky"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
@@ -30,6 +31,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
+    "husky": "^9.1.7",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "^4.2.1",

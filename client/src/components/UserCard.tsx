@@ -52,7 +52,7 @@ export default function UserCard({ user, isAdmin, onEditPhoto }: UserCardProps) 
         </div>
 
         {/* INFORMATIONS */}
-        <h5 className="mb-1 text-xl font-medium text-gray-900 dark:text-white">
+        <h5 className="mb-1 text-center text-xl font-medium text-gray-900 dark:text-white">
           {user.firstName} {user.lastName}
         </h5>
         <span className="mb-3 flex h-10 items-center text-center text-sm text-gray-500 dark:text-gray-400">
