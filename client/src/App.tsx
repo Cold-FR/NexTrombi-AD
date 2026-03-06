@@ -20,6 +20,49 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  // --- ÉTATS POUR L'INFINITE SCROLL ---
+  const [displayedCount, setDisplayedCount] = useState(24); // On affiche 24 cartes au début
+  const observerTarget = useRef<HTMLDivElement>(null); // La "balise" invisible en bas de page
+
+  // --- FILTRAGE ET PAGINATION ---
+  const filteredUsers = users.filter((user) =>
+    `${user.firstName} ${user.lastName} ${user.department}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+
+  // On découpe la liste pour n'afficher que ce qui est permis
+  const visibleUsers = filteredUsers.slice(0, displayedCount);
+
+  // Si on tape une recherche, on réinitialise l'affichage à 24
+  useEffect(() => {
+    setDisplayedCount(24);
+  }, [searchTerm]);
+
+  // --- LOGIQUE DE L'INFINITE SCROLL ---
+  useEffect(() => {
+    // L'observateur regarde si notre balise cible (en bas) rentre dans l'écran
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          // Si on voit la balise et qu'il reste des utilisateurs à afficher, on en rajoute 24 !
+          setDisplayedCount((prevCount) => prevCount + 24);
+        }
+      },
+      { threshold: 0.1 } // Se déclenche dès qu'on voit 10% de la balise
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [observerTarget, visibleUsers.length, filteredUsers.length]);
+
   // --- LOGIQUE DE CONNEXION ---
   const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -130,13 +173,6 @@ export default function App() {
 
     fetchUsers();
   }, [token]);
-
-  // --- FILTRAGE ---
-  const filteredUsers = users.filter((user) =>
-    `${user.firstName} ${user.lastName} ${user.department}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
 
   // === RENDU : ÉCRAN DE CONNEXION ===
   if (!token) {
@@ -254,22 +290,32 @@ export default function App() {
             Aucun collaborateur trouvé pour cette recherche.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {filteredUsers.map((user) => (
-              <UserCard
-                key={user.id}
-                user={user}
-                isAdmin={isAdmin} // <-- C'est le vrai JWT qui gère ça maintenant !
-                onEditPhoto={(id) => {
-                  const u = users.find((usr) => usr.id === id);
-                  if (u) {
-                    setSelectedUser(u);
-                    setIsModalOpen(true);
-                  }
-                }}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {visibleUsers.map((user) => (
+                <UserCard
+                  key={user.id}
+                  user={user}
+                  isAdmin={isAdmin} // <-- C'est le vrai JWT qui gère ça maintenant !
+                  onEditPhoto={(id) => {
+                    const u = users.find((usr) => usr.id === id);
+                    if (u) {
+                      setSelectedUser(u);
+                      setIsModalOpen(true);
+                    }
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* --- BALISE SENTINELLE POUR L'INFINITE SCROLL --- */}
+            {/* On ne l'affiche que s'il reste des utilisateurs à charger */}
+            {displayedCount < filteredUsers.length && (
+              <div ref={observerTarget} className="mt-4 flex w-full justify-center py-10">
+                <Loader2 className="animate-spin text-gray-400" size={32} />
+              </div>
+            )}
+          </>
         )}
       </main>
 
