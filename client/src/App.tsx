@@ -40,9 +40,9 @@ function App() {
                         <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 bg-primary-600 text-white rounded-lg shadow-sm">
                             <Users size={20} className="sm:w-6 sm:h-6" />
                         </div>
-                        <span className="hidden sm:inline text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 transition-colors">
-              Trombinoscope
-            </span>
+                        <span className="hidden sm:inline text-lg font-semibold text-gray-900 dark:text-white">
+                          {import.meta.env.VITE_APP_TITLE || 'Trombinoscope'}
+                        </span>
                     </div>
 
                     {/* Droite : Actions (Recherche + Admin) */}
