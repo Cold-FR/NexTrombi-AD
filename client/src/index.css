@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 @plugin 'flowbite/plugin';
 
+/* Activer le dark mode via la classe .dark sur <html> */
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Vos couleurs personnalisées "Teal" du projet formulaire-ad */
   --color-primary-50: #f0fdfa;
