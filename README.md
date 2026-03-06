@@ -381,8 +381,6 @@ Les contributions sont les bienvenues ! Consultez le **[Guide de contribution](C
 - Les conventions de code (PHP CS Fixer, PHPStan, ESLint, Prettier)
 - La convention de commits ([Conventional Commits](https://www.conventionalcommits.org/))
 
-En participant, vous vous engagez à respecter notre **[Code de conduite](CODE_OF_CONDUCT.md)**.
-
 ### Démarrage rapide
 
 1. **Forkez** le dépôt
