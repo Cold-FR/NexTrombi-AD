@@ -19,6 +19,7 @@
     "config": {
         "allow-plugins": {
             "php-http/discovery": true,
+            "phpstan/extension-installer": true,
             "symfony/flex": true,
             "symfony/runtime": true
         },
@@ -108,12 +109,11 @@
         }
     },
     "require-dev": {
-        "symfony/maker-bundle": "^1.66",
-        "friendsofphp/php-cs-fixer": "^3.94.2",
-        "phpstan/extension-installer": "^1.4.3",
-        "phpstan/phpstan": "^2.1.40",
-        "phpstan/phpstan-doctrine": "^2.0.18",
-        "phpstan/phpstan-symfony": "^2.0.15",
-        "phpunit/phpunit": "^13.0.5"
+        "friendsofphp/php-cs-fixer": "^3.94",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "symfony/maker-bundle": "^1.66"
     }
 }
