@@ -51,7 +51,7 @@ export default function App() {
       } else {
         setLoginError(data.error || 'Identifiants incorrects');
       }
-    } catch (error) {
+    } catch {
       setLoginError('Erreur de connexion au serveur');
     } finally {
       setIsLoading(false);
