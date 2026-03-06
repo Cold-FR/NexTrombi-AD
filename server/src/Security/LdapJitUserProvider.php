@@ -2,6 +2,7 @@
 
 namespace App\Security;
 
+use App\Service\LdapConnection;
 use LdapRecord\Models\ActiveDirectory\User as LdapUser;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -17,11 +18,16 @@ readonly class LdapJitUserProvider implements UserProviderInterface
     public function __construct(
         // On récupère le groupe Admin depuis le .env
         #[Autowire('%env(APP_LDAP_ADMIN_GROUP)%')] private string $adminGroup,
+        // Injecté pour initialiser la connexion dans le Container LdapRecord
+        private LdapConnection $ldapConnection,
     ) {
     }
 
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
+        // S'assure que la connexion est bien enregistrée dans le Container LdapRecord
+        $this->ldapConnection->getConnection();
+
         // 1. On cherche l'utilisateur dans l'AD
         $ldapUser = LdapUser::findBy('samaccountname', $identifier);
 
