@@ -1,5 +1,5 @@
-# S'assure que TypeScript compile bien globalement (sans générer de fichiers)
-bun run tsc --noEmit
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
-# Lance le nettoyage sur les fichiers modifiés
-bunx lint-staged
+bun run tsc --noEmit || exit 1
+bun run precommit || exit 1
