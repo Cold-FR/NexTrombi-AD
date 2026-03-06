@@ -17,6 +17,7 @@ class LdapConnection
         #[Autowire('%env(LDAP_BASE_DN)%')] private readonly string $baseDn,
         #[Autowire('%env(LDAP_SEARCH_DN)%')] private readonly string $username,
         #[Autowire('%env(LDAP_SEARCH_PASSWORD)%')] private readonly string $password,
+        #[Autowire('%env(bool:LDAP_USE_TLS)%')] private readonly bool $useTls,
     ) {
         $this->connect();
     }
@@ -29,7 +30,7 @@ class LdapConnection
             'username' => $this->username,
             'password' => $this->password,
             'port' => $this->port,
-            'use_tls' => false,
+            'use_tls' => $this->useTls,
         ];
 
         $this->connection = new Connection($config);
