@@ -1,31 +1,39 @@
 security:
-    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
-    password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
-
-    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+    # On déclare notre Provider JIT
     providers:
-        users_in_memory: { memory: null }
+        app_ldap_provider:
+            id: App\Security\LdapJitUserProvider
 
     firewalls:
         dev:
-            # Ensure dev tools and static assets are always allowed
-            pattern: ^/(_profiler|_wdt|assets|build)/
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        main:
-            lazy: true
-            provider: users_in_memory
 
-            # Activate different ways to authenticate:
-            # https://symfony.com/doc/current/security.html#the-firewall
+        # Le pare-feu pour la connexion (génère le token)
+        login:
+            pattern: ^/api/login
+            stateless: true
+            provider: app_ldap_provider
+            custom_authenticators:
+                - App\Security\LdapJsonAuthenticator
 
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
+        # Le pare-feu pour tout le reste de l'API (vérifie le token)
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_ldap_provider
+            jwt: ~ # Active LexikJWT pour lire le token passé dans le header Authorization
 
-    # Note: Only the *first* matching rule is applied
+    # Contrôle d'accès basique
     access_control:
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/profile, roles: ROLE_USER }
+        # La route de connexion DOIT rester publique
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+
+        # Seuls les admins peuvent faire un POST (uploader/modifier une photo)
+        - { path: ^/api/users, methods: [POST], roles: ROLE_ADMIN }
+
+        # TOUT le reste de l'API (dont le GET /api/users) nécessite d'être connecté
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:
