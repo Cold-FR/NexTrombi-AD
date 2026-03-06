@@ -1,5 +1,14 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
 
+# On descend dans le dossier client car Git s'exécute depuis la racine
+cd client
+
+# Vérification stricte de TypeScript
 bun run tsc --noEmit || exit 1
-bun run precommit || exit 1
+
+bun run format || exit 1
+bun run lint:fix || exit 1
+
+# On remonte à la racine et on ajoute les corrections au commit
+cd ..
+git add client/src/
