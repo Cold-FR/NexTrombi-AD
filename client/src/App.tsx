@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Users, LogOut, Loader2 } from 'lucide-react';
 import UserCard, { type User } from './components/UserCard';
 import PhotoUploadModal from './components/PhotoUploadModal';
@@ -21,7 +21,7 @@ export default function App() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   // --- LOGIQUE DE CONNEXION ---
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setLoginError('');
