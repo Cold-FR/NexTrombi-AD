@@ -15,32 +15,33 @@ class UploadService
     public function __construct(
         #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
         private readonly SluggerInterface $slugger,
-    ) {}
+    ) {
+    }
 
     /**
-     * Pour le mode LOCAL : Sauvegarde l'image sur le disque en WebP
+     * Pour le mode LOCAL : Sauvegarde l'image sur le disque en WebP.
      */
     public function handleLocalUpload(UploadedFile $file): string
     {
         $image = $this->validateAndLoadImage($file);
 
-        $uploadsDirectory = $this->projectDir . '/public/uploads/photos';
+        $uploadsDirectory = $this->projectDir.'/public/uploads/photos';
         new Filesystem()->mkdir($uploadsDirectory, 0755);
 
         // On redimensionne à une taille raisonnable pour un trombi (ex: 400x400 max)
         $resizedImage = $this->resizeImage($image, 400, 400);
 
         $safeFilename = $this->slugger->slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-        $newFilename = $safeFilename . '-' . uniqid() . '.webp';
+        $newFilename = $safeFilename.'-'.uniqid().'.webp';
 
         // Sauvegarde en WebP (qualité 80)
-        imagewebp($resizedImage, $uploadsDirectory . '/' . $newFilename, 80);
+        imagewebp($resizedImage, $uploadsDirectory.'/'.$newFilename, 80);
 
         return $newFilename;
     }
 
     /**
-     * Pour le mode AD : Retourne le flux binaire de l'image formatée en JPEG
+     * Pour le mode AD : Retourne le flux binaire de l'image formatée en JPEG.
      */
     public function handleAdUpload(UploadedFile $file): string
     {
@@ -52,9 +53,8 @@ class UploadService
         // On capture le flux JPEG en mémoire (buffer) au lieu de l'écrire sur le disque
         ob_start();
         imagejpeg($resizedImage, null, 85);
-        $binaryData = ob_get_clean();
 
-        return $binaryData;
+        return ob_get_clean();
     }
 
     private function validateAndLoadImage(UploadedFile $file): \GdImage
@@ -73,10 +73,12 @@ class UploadService
             'image/jpeg', 'image/jpg' => imagecreatefromjpeg($sourcePath),
             'image/png' => imagecreatefrompng($sourcePath),
             'image/webp' => imagecreatefromwebp($sourcePath),
-            default => false,
         };
 
-        if (!$image) throw new \RuntimeException('Impossible de lire l\'image.');
+        if (!$image) {
+            throw new \RuntimeException('Impossible de lire l\'image.');
+        }
+
         return $image;
     }
 

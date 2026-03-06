@@ -17,7 +17,7 @@ class UserPhoto
     private string $ldapUsername;
 
     #[ORM\Column(length: 255)]
-    private string $photoFilename ;
+    private string $photoFilename;
 
     public function getId(): ?int
     {

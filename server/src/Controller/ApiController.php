@@ -12,15 +12,16 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Attribute\Route;
 
 class ApiController extends AbstractController
 {
     public function __construct(
         #[Autowire('%env(APP_LDAP_USERS_OU)%')] private readonly string $usersOu,
         #[Autowire('%env(APP_PHOTO_STORAGE_MODE)%')] private readonly string $photoStorageMode,
-    ) {}
+    ) {
+    }
 
     #[Route('/api/users', name: 'api_users', methods: ['GET'])]
     public function getUsers(LdapConnection $ldapConnection, UserPhotoRepository $photoRepo, Request $request): JsonResponse
@@ -44,7 +45,7 @@ class ApiController extends AbstractController
             $photoMap = [];
             $baseUrl = $request->getSchemeAndHttpHost();
 
-            if ($this->photoStorageMode === 'local') {
+            if ('local' === $this->photoStorageMode) {
                 $photosDb = $photoRepo->findAll();
                 foreach ($photosDb as $photo) {
                     $photoMap[$photo->getLdapUsername()] = $photo->getPhotoFilename();
@@ -59,16 +60,16 @@ class ApiController extends AbstractController
                 $photoUrl = null;
 
                 // --- LE CHOIX DU MODE EST ICI ---
-                if ($this->photoStorageMode === 'ad') {
+                if ('ad' === $this->photoStorageMode) {
                     // Mode AD : on lit le binaire et on le transforme en Base64
                     $photoBinaire = $entry->getFirstAttribute('thumbnailphoto');
                     if ($photoBinaire) {
-                        $photoUrl = 'data:image/jpeg;base64,' . base64_encode($photoBinaire);
+                        $photoUrl = 'data:image/jpeg;base64,'.base64_encode($photoBinaire);
                     }
                 } else {
                     // Mode Local : on cherche dans notre tableau PHP construit depuis la BDD
                     if (isset($photoMap[$samaccountname])) {
-                        $photoUrl = $baseUrl . '/uploads/photos/' . $photoMap[$samaccountname];
+                        $photoUrl = $baseUrl.'/uploads/photos/'.$photoMap[$samaccountname];
                     }
                 }
                 // --------------------------------
@@ -89,9 +90,8 @@ class ApiController extends AbstractController
             usort($users, fn ($a, $b) => strcmp($a['lastName'], $b['lastName']));
 
             return $this->json($users);
-
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Erreur LDAP : ' . $e->getMessage()], 503);
+            return $this->json(['error' => 'Erreur LDAP : '.$e->getMessage()], 503);
         }
     }
 
@@ -102,7 +102,7 @@ class ApiController extends AbstractController
         UploadService $uploadService,
         LdapConnection $ldapConnection,
         UserPhotoRepository $photoRepo,
-        EntityManagerInterface $em
+        EntityManagerInterface $em,
     ): JsonResponse {
         $file = $request->files->get('photo');
 
@@ -111,7 +111,7 @@ class ApiController extends AbstractController
         }
 
         try {
-            if ($this->photoStorageMode === 'ad') {
+            if ('ad' === $this->photoStorageMode) {
                 // --- MODE ACTIVE DIRECTORY ---
                 $ldapConnection->getConnection();
 
@@ -129,8 +129,7 @@ class ApiController extends AbstractController
                 $user->save();
 
                 // On renvoie l'image en Base64 pour que React l'affiche direct
-                $newPhotoUrl = 'data:image/jpeg;base64,' . base64_encode($binaryJpeg);
-
+                $newPhotoUrl = 'data:image/jpeg;base64,'.base64_encode($binaryJpeg);
             } else {
                 // --- MODE LOCAL (Base de données) ---
                 $newFilename = $uploadService->handleLocalUpload($file);
@@ -143,7 +142,7 @@ class ApiController extends AbstractController
                     $userPhoto->setLdapUsername($id);
                 } else {
                     // Supprimer l'ancienne image physique si elle existe
-                    $oldPath = $this->getParameter('kernel.project_dir') . '/public/uploads/photos/' . $userPhoto->getPhotoFilename();
+                    $oldPath = $this->getParameter('kernel.project_dir').'/public/uploads/photos/'.$userPhoto->getPhotoFilename();
                     $fileSys = new Filesystem();
                     if ($fileSys->exists($oldPath)) {
                         $fileSys->remove($oldPath);
@@ -154,14 +153,13 @@ class ApiController extends AbstractController
                 $em->persist($userPhoto);
                 $em->flush();
 
-                $newPhotoUrl = $request->getSchemeAndHttpHost() . '/uploads/photos/' . $newFilename;
+                $newPhotoUrl = $request->getSchemeAndHttpHost().'/uploads/photos/'.$newFilename;
             }
 
             return $this->json([
                 'message' => 'Photo mise à jour avec succès',
-                'photoUrl' => $newPhotoUrl
+                'photoUrl' => $newPhotoUrl,
             ]);
-
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], 500);
         }
