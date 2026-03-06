@@ -29,7 +29,7 @@ class LdapConnection
             'username' => $this->username,
             'password' => $this->password,
             'port' => $this->port,
-            'use_tls' => true,
+            'use_tls' => false,
         ];
 
         $this->connection = new Connection($config);
