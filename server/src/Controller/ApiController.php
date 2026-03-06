@@ -2,11 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\UserPhoto;
 use App\Repository\UserPhotoRepository;
 use App\Service\LdapConnection;
+use App\Service\UploadService;
+use Doctrine\ORM\EntityManagerInterface;
 use LdapRecord\Models\ActiveDirectory\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
@@ -88,6 +92,78 @@ class ApiController extends AbstractController
 
         } catch (\Exception $e) {
             return $this->json(['error' => 'Erreur LDAP : ' . $e->getMessage()], 503);
+        }
+    }
+
+    #[Route('/api/users/{id}/photo', name: 'api_upload_photo', methods: ['POST'])]
+    public function uploadPhoto(
+        string $id,
+        Request $request,
+        UploadService $uploadService,
+        LdapConnection $ldapConnection,
+        UserPhotoRepository $photoRepo,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $file = $request->files->get('photo');
+
+        if (!$file) {
+            return $this->json(['error' => 'Aucune image trouvée dans la requête.'], 400);
+        }
+
+        try {
+            if ($this->photoStorageMode === 'ad') {
+                // --- MODE ACTIVE DIRECTORY ---
+                $ldapConnection->getConnection();
+
+                // On récupère le binaire JPEG ultra-léger généré par votre UploadService
+                $binaryJpeg = $uploadService->handleAdUpload($file);
+
+                // On cherche l'utilisateur dans l'AD
+                $user = User::findBy('samaccountname', $id);
+                if (!$user) {
+                    return $this->json(['error' => 'Utilisateur introuvable dans l\'AD.'], 404);
+                }
+
+                // On écrase l'attribut (LdapRecord gère l'encodage binaire tout seul)
+                $user->thumbnailphoto = $binaryJpeg;
+                $user->save();
+
+                // On renvoie l'image en Base64 pour que React l'affiche direct
+                $newPhotoUrl = 'data:image/jpeg;base64,' . base64_encode($binaryJpeg);
+
+            } else {
+                // --- MODE LOCAL (Base de données) ---
+                $newFilename = $uploadService->handleLocalUpload($file);
+
+                // On cherche s'il a déjà une photo en base
+                $userPhoto = $photoRepo->findOneBy(['ldapUsername' => $id]);
+
+                if (!$userPhoto) {
+                    $userPhoto = new UserPhoto();
+                    $userPhoto->setLdapUsername($id);
+                } else {
+                    // Supprimer l'ancienne image physique si elle existe
+                    $oldPath = $this->getParameter('kernel.project_dir') . '/public/uploads/photos/' . $userPhoto->getPhotoFilename();
+                    $fileSys = new Filesystem();
+                    if ($fileSys->exists($oldPath)) {
+                        $fileSys->remove($oldPath);
+                    }
+                }
+
+                $userPhoto->setPhotoFilename($newFilename);
+                $em->persist($userPhoto);
+                $em->flush();
+
+                $newPhotoUrl = $request->getSchemeAndHttpHost() . '/uploads/photos/' . $newFilename;
+            }
+
+            return $this->json([
+                'message' => 'Photo mise à jour avec succès',
+                'photoUrl' => $newPhotoUrl
+            ]);
+
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
         }
     }
 }
