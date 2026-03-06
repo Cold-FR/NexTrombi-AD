@@ -1,0 +1,72 @@
+name: CI / Qualité du code
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # ==========================================
+  # 🐘 BACKEND (Symfony / PHP)
+  # ==========================================
+  backend-quality:
+    name: Backend (PHP)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo, pdo_sqlite, gd, ldap
+          coverage: none
+
+      - name: Installation des dépendances
+        run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
+
+      - name: PHP-CS-Fixer (Dry Run)
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+      - name: PHPStan
+        run: vendor/bin/phpstan analyse src tests --level=8
+
+
+  # ==========================================
+  # ⚛️ FRONTEND (React / Vite / Bun)
+  # ==========================================
+  frontend-quality:
+    name: Frontend (React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./client
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # Action officielle pour installer Bun
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Installation des dépendances
+        run: bun install
+
+      - name: Vérification du formatage (Prettier)
+        run: bun run format:check
+
+      - name: Analyse statique (ESLint)
+        run: bun run lint
+
+      # S'assure que TypeScript compile bien et que Vite réussit le build
+      - name: Test de Build (TypeScript + Vite)
+        run: bun run build
