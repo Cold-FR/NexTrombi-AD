@@ -1,4 +1,4 @@
-# 📇 Trombinoscope AD
+# 📇 NexTrombi-AD
 
 > Annuaire visuel des collaborateurs connecté à votre Active Directory.  
 > Authentification LDAP, gestion des photos (stockage local ou directement dans l'AD), rôles basés sur les groupes AD, interface moderne et responsive.
@@ -53,7 +53,7 @@
 ## 🏗️ Architecture
 
 ```
-trombinoscope-ad/
+NexTrombi-AD/
 ├── client/                # Frontend React + Vite + Tailwind CSS
 │   ├── src/
 │   │   ├── App.tsx                    # Composant principal (auth + trombinoscope)
@@ -122,8 +122,8 @@ Le frontend React communique avec l'API Symfony via des appels REST. L'API inter
 ### 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/votre-organisation/trombinoscope-ad.git
-cd trombinoscope-ad
+git clone https://github.com/Cold-FR/NexTrombi-AD.git
+cd NexTrombi-AD
 ```
 
 ### 2. Backend (Symfony)
@@ -374,20 +374,22 @@ Le projet intègre plusieurs outils de qualité de code :
 
 ## 🤝 Contribuer
 
-Les contributions sont les bienvenues ! Voici comment procéder :
+Les contributions sont les bienvenues ! Consultez le **[Guide de contribution](CONTRIBUTING.md)** pour tout savoir sur :
+
+- La mise en place de l'environnement de développement
+- Le workflow de contribution (branches, PR, reviews)
+- Les conventions de code (PHP CS Fixer, PHPStan, ESLint, Prettier)
+- La convention de commits ([Conventional Commits](https://www.conventionalcommits.org/))
+
+En participant, vous vous engagez à respecter notre **[Code de conduite](CODE_OF_CONDUCT.md)**.
+
+### Démarrage rapide
 
 1. **Forkez** le dépôt
 2. Créez une **branche** pour votre fonctionnalité (`git checkout -b feature/ma-fonctionnalite`)
 3. **Commitez** vos changements (`git commit -m "feat: ajout de ma fonctionnalité"`)
 4. **Poussez** la branche (`git push origin feature/ma-fonctionnalite`)
 5. Ouvrez une **Pull Request**
-
-### Conventions
-
-- Commits au format [Conventional Commits](https://www.conventionalcommits.org/)
-- Code PHP conforme aux règles PHP CS Fixer & PHPStan
-- Code TypeScript conforme aux règles ESLint & Prettier
-- Les hooks GrumPHP et Husky valident automatiquement le code avant chaque commit
 
 ---
 
