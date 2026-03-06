@@ -1,1 +1,5 @@
-bun test
+# S'assure que TypeScript compile bien globalement (sans générer de fichiers)
+bun run tsc --noEmit
+
+# Lance le nettoyage sur les fichiers modifiés
+bunx lint-staged
