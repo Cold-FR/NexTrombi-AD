@@ -66,6 +66,42 @@ export default function App() {
     setUsers([]); // On vide la liste des utilisateurs de la mémoire
   };
 
+  const handleSavePhoto = async (userId: string, file: File) => {
+    if (!token) return;
+
+    const formData = new FormData();
+    formData.append('photo', file); // 'photo' doit correspondre au nom attendu par le backend
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users/${userId}/photo`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // Attention : Ne PAS mettre de 'Content-Type': 'multipart/form-data' ici.
+            // Fetch s'en occupe tout seul quand on lui passe un FormData !
+          },
+          body: formData,
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // On met à jour l'utilisateur dans le state local pour afficher la nouvelle photo immédiatement
+        setUsers(users.map((u) => (u.id === userId ? { ...u, photoUrl: data.photoUrl } : u)));
+
+        setIsModalOpen(false); // On ferme la modale en cas de succès
+      } else {
+        const errorData = await response.json();
+        console.error('Erreur du serveur :', errorData.error);
+      }
+    } catch (error) {
+      console.error("Erreur réseau lors de l'envoi :", error);
+    }
+  };
+
   // --- RÉCUPÉRATION DES DONNÉES (Se lance quand on a un token) ---
   useEffect(() => {
     if (!token) return;
@@ -211,7 +247,7 @@ export default function App() {
         {users.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-gray-500">
             <Loader2 size={48} className="text-primary-600 mb-4 animate-spin" />
-            <p>Chargement de l'annuaire depuis l'Active Directory...</p>
+            <p>Chargement de l'annuaire...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="py-20 text-center text-gray-500">
@@ -241,10 +277,7 @@ export default function App() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         user={selectedUser}
-        onSave={async () => {
-          // L'envoi API sécurisé se fera ici avec le Token
-          console.log('Prêt à envoyer avec le token :', token);
-        }}
+        onSave={handleSavePhoto}
       />
     </div>
   );
