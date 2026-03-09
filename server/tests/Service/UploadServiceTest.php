@@ -16,7 +16,7 @@ class UploadServiceTest extends TestCase
     protected function setUp(): void
     {
         // Création d'un dossier temporaire unique pour isoler les tests
-        $this->tempDir = sys_get_temp_dir() . '/trombi_tests_' . uniqid();
+        $this->tempDir = sys_get_temp_dir().'/trombi_tests_'.uniqid();
         new Filesystem()->mkdir($this->tempDir);
 
         // Initialisation du service
@@ -33,11 +33,11 @@ class UploadServiceTest extends TestCase
     }
 
     /**
-     * Helper : Crée une fausse image jpeg sur le disque pour nos tests
+     * Helper : Crée une fausse image jpeg sur le disque pour nos tests.
      */
     private function createDummyImage(int $width, int $height, string $filename = 'test.jpg'): string
     {
-        $path = $this->tempDir . '/' . $filename;
+        $path = $this->tempDir.'/'.$filename;
         $image = imagecreatetruecolor($width, $height);
         imagejpeg($image, $path);
 
@@ -46,7 +46,7 @@ class UploadServiceTest extends TestCase
 
     public function testThrowsExceptionIfFileIsTooLarge(): void
     {
-        $path = $this->tempDir . '/large_file.jpg';
+        $path = $this->tempDir.'/large_file.jpg';
         // Création d'un faux fichier de 11 Mo
         $f = fopen($path, 'w');
         fseek($f, 11 * 1024 * 1024 - 1, SEEK_CUR);
@@ -64,7 +64,7 @@ class UploadServiceTest extends TestCase
 
     public function testThrowsExceptionIfMimeTypeIsInvalid(): void
     {
-        $path = $this->tempDir . '/invalid.txt';
+        $path = $this->tempDir.'/invalid.txt';
         file_put_contents($path, 'Ceci n\'est pas une image');
 
         $file = new UploadedFile($path, 'invalid.txt', 'text/plain', \UPLOAD_ERR_OK, true);
@@ -85,7 +85,7 @@ class UploadServiceTest extends TestCase
         $this->assertStringEndsWith('.webp', $filename);
         $this->assertStringContainsString('small', $filename);
 
-        $savedPath = $this->tempDir . '/public/uploads/photos/' . $filename;
+        $savedPath = $this->tempDir.'/public/uploads/photos/'.$filename;
         $this->assertFileExists($savedPath);
 
         $dimensions = getimagesize($savedPath);
@@ -100,7 +100,7 @@ class UploadServiceTest extends TestCase
 
         $filename = $this->uploadService->handleLocalUpload($file);
 
-        $savedPath = $this->tempDir . '/public/uploads/photos/' . $filename;
+        $savedPath = $this->tempDir.'/public/uploads/photos/'.$filename;
         $this->assertFileExists($savedPath);
 
         $dimensions = getimagesize($savedPath);
