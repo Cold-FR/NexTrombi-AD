@@ -57,9 +57,10 @@ NexTrombi-AD/
 ├── client/                # Frontend React + Vite + Tailwind CSS
 │   ├── src/
 │   │   ├── App.tsx                    # Composant principal (auth + trombinoscope)
-│   │   └── components/
-│   │       ├── UserCard.tsx           # Fiche collaborateur
-│   │       └── PhotoUploadModal.tsx   # Modale d'upload de photo
+│   │   ├── components/
+│   │   │   ├── UserCard.tsx           # Fiche collaborateur
+│   │   │   └── PhotoUploadModal.tsx   # Modale d'upload de photo
+│   │   └── ...                        # Autres (hooks, utils, context, etc.)
 │   └── ...
 ├── server/                # Backend API Symfony
 │   ├── src/
