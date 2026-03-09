@@ -43,7 +43,7 @@ export default function UserCard({ user, isAdmin, onEditPhoto }: UserCardProps) 
           {isAdmin && onEditPhoto && (
             <button
               onClick={() => onEditPhoto(user.id)}
-              className="bg-primary-600 hover:bg-primary-700 absolute right-0 bottom-0 rounded-full p-2 text-white opacity-0 shadow-md ring-2 ring-white transition-opacity group-hover/card:opacity-100 dark:ring-gray-800"
+              className="bg-primary-600 hover:bg-primary-700 absolute right-0 bottom-0 rounded-full p-2 text-white shadow-md ring-2 ring-white transition-opacity sm:opacity-0 sm:group-hover/card:opacity-100 dark:ring-gray-800"
               title="Modifier la photo"
             >
               <Camera size={16} />
