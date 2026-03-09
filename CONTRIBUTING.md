@@ -36,7 +36,7 @@ Assurez-vous d'avoir installé les outils suivants :
 ### 1. Forker et cloner
 
 ```bash
-# Forker le dépôt sur GitHub, puis :
+# Forker le dépôt sur GitHub (https://github.com/Cold-FR/NexTrombi-AD), puis :
 git clone https://github.com/<votre-utilisateur>/NexTrombi-AD.git
 cd NexTrombi-AD
 ```
@@ -142,7 +142,6 @@ bun run format
 
 ### Règles générales
 
-- Indentation : **4 espaces** (PHP), **2 espaces** (TS/TSX/CSS/YAML/JSON)
 - Encodage : **UTF-8**
 - Fins de ligne : **LF** (Unix)
 - Toujours terminer les fichiers par une ligne vide
@@ -240,7 +239,7 @@ NexTrombi-AD/
 
 ## 🐛 Signaler un bug
 
-Ouvrez une [issue](../../issues/new) avec :
+Ouvrez une [issue](https://github.com/Cold-FR/NexTrombi-AD/issues/new) avec :
 
 - **Description** claire du problème
 - **Étapes de reproduction** détaillées
@@ -252,7 +251,7 @@ Ouvrez une [issue](../../issues/new) avec :
 
 ## 💡 Proposer une fonctionnalité
 
-Ouvrez une [issue](../../issues/new) avec :
+Ouvrez une [issue](https://github.com/Cold-FR/NexTrombi-AD/issues/new) avec :
 
 - **Description** de la fonctionnalité souhaitée
 - **Motivation** — Quel problème cela résout ?
