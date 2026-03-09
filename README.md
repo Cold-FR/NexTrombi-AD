@@ -9,6 +9,10 @@
 ![PHP](https://img.shields.io/badge/PHP-≥8.5-777BB4?logo=php)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+<p align="center">
+  <img src="https://i.imgur.com/MjiFiKr.png" alt="Capture d'écran" width="1280"/>
+</p>
+
 ---
 
 ## 📋 Table des matières
@@ -57,9 +61,10 @@ NexTrombi-AD/
 ├── client/                # Frontend React + Vite + Tailwind CSS
 │   ├── src/
 │   │   ├── App.tsx                    # Composant principal (auth + trombinoscope)
-│   │   └── components/
-│   │       ├── UserCard.tsx           # Fiche collaborateur
-│   │       └── PhotoUploadModal.tsx   # Modale d'upload de photo
+│   │   ├── components/
+│   │   │   ├── UserCard.tsx           # Fiche collaborateur
+│   │   │   └── PhotoUploadModal.tsx   # Modale d'upload de photo
+│   │   └── ...                        # Autres (hooks, utils, context, etc.)
 │   └── ...
 ├── server/                # Backend API Symfony
 │   ├── src/
