@@ -83,10 +83,15 @@
         "test:yaml": [
             "php bin/console lint:yaml config"
         ],
+        "test:phpunit": [
+            "php bin/console doctrine:database:create --if-not-exists --env=test",
+            "php bin/phpunit"
+        ],
         "test": [
             "@test:csfixer",
             "@test:phpstan",
-            "@test:yaml"
+            "@test:yaml",
+            "@test:phpunit"
         ],
         "fix": [
             "@fix:csfixer"

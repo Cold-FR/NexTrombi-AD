@@ -31,11 +31,8 @@ jobs:
       - name: Installation des dépendances
         run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
 
-      - name: Create test database
-        run: php bin/console doctrine:database:create --env=test
-
       - name: Run PHPUnit Tests
-        run: php bin/phpunit
+        run: composer test:phpunit
 
       - name: PHP-CS-Fixer (Dry Run)
         run: vendor/bin/php-cs-fixer fix --dry-run --diff
