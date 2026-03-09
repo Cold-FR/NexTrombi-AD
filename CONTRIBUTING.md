@@ -36,7 +36,7 @@ Assurez-vous d'avoir installé les outils suivants :
 ### 1. Forker et cloner
 
 ```bash
-# Forker le dépôt sur GitHub, puis :
+# Forker le dépôt sur GitHub (https://github.com/Cold-FR/NexTrombi-AD), puis :
 git clone https://github.com/<votre-utilisateur>/NexTrombi-AD.git
 cd NexTrombi-AD
 ```
@@ -142,7 +142,6 @@ bun run format
 
 ### Règles générales
 
-- Indentation : **4 espaces** (PHP), **2 espaces** (TS/TSX/CSS/YAML/JSON)
 - Encodage : **UTF-8**
 - Fins de ligne : **LF** (Unix)
 - Toujours terminer les fichiers par une ligne vide
@@ -155,7 +154,7 @@ bun run format
 Nous utilisons [Conventional Commits](https://www.conventionalcommits.org/fr/) :
 
 ```
-<type>(<portée>): <description>
+<type>(<scope>): <description in english>
 ```
 
 ### Types autorisés
@@ -182,10 +181,11 @@ Nous utilisons [Conventional Commits](https://www.conventionalcommits.org/fr/) :
 ### Exemples
 
 ```
-feat(client): ajout du bouton de changement de thème
-fix(server): correction de l'authentification LDAP avec accents
-docs: mise à jour du README avec les nouvelles variables d'environnement
-chore(deps): mise à jour de Symfony vers 8.0.3
+feat(client): add theme toggle button
+fix(server): fix LDAP authentication with accents
+docs: update README with new environment variables
+chore(deps): bump Symfony to 8.0.3
+refactor(server): extract photo resizing logic to UploadService
 ```
 
 ---
@@ -212,7 +212,6 @@ NexTrombi-AD/
 │   ├── config/           # Configuration Symfony
 │   └── migrations/       # Migrations Doctrine
 ├── CONTRIBUTING.md       # Ce fichier
-├── CODE_OF_CONDUCT.md    # Code de conduite
 └── LICENSE               # Licence MIT
 ```
 
@@ -240,7 +239,7 @@ NexTrombi-AD/
 
 ## 🐛 Signaler un bug
 
-Ouvrez une [issue](../../issues/new) avec :
+Ouvrez une [issue](https://github.com/Cold-FR/NexTrombi-AD/issues/new) avec :
 
 - **Description** claire du problème
 - **Étapes de reproduction** détaillées
@@ -252,7 +251,7 @@ Ouvrez une [issue](../../issues/new) avec :
 
 ## 💡 Proposer une fonctionnalité
 
-Ouvrez une [issue](../../issues/new) avec :
+Ouvrez une [issue](https://github.com/Cold-FR/NexTrombi-AD/issues/new) avec :
 
 - **Description** de la fonctionnalité souhaitée
 - **Motivation** — Quel problème cela résout ?

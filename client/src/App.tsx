@@ -257,25 +257,29 @@ export default function App() {
   // === RENDU : APPLICATION SÉCURISÉE (Trombinoscope) ===
   return (
     <div className="flex min-h-screen flex-col font-sans text-gray-900 dark:text-gray-100">
-      <nav className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-4 shadow-sm sm:px-6 dark:border-gray-700 dark:bg-gray-800">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+      <nav className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        {/* Ligne principale : logo + actions */}
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          {/* Logo + Nom */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <div className="bg-primary-600 flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm sm:h-10 sm:w-10">
-              <Users size={20} className="sm:h-6 sm:w-6" />
+            <div className="bg-primary-600 flex h-8 w-8 items-center justify-center rounded-lg text-white shadow-sm sm:h-9 sm:w-9">
+              <Users size={18} className="sm:size-5" />
             </div>
-            <span className="hidden text-lg font-semibold text-gray-900 sm:inline dark:text-white">
-              Trombinoscope
+            <span className="text-base font-semibold text-gray-900 sm:text-lg dark:text-white">
+              NexTrombi-AD
             </span>
           </div>
 
-          <div className="flex w-full shrink-0 items-center justify-end gap-3 sm:w-auto">
-            <div className="relative w-full sm:w-72">
+          {/* Actions (droite) */}
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Barre de recherche : visible seulement sur sm+ ici, sinon en 2e ligne */}
+            <div className="relative hidden sm:block sm:w-64 md:w-72 lg:w-80">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search className="h-4 w-4 text-gray-500" />
+                <Search className="h-4 w-4 text-gray-400" />
               </div>
               <input
                 type="text"
-                className="focus:ring-primary-500 focus:border-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 p-2 pl-10 text-sm text-gray-900 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="focus:ring-primary-500 focus:border-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 py-2 pr-3 pl-9 text-sm text-gray-900 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
                 placeholder="Chercher un nom, un service..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -292,15 +296,31 @@ export default function App() {
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
 
-            {/* Bouton de déconnexion au lieu du "faux" bouton admin */}
+            {/* Bouton de déconnexion */}
             <button
               onClick={handleLogout}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-red-600 sm:w-auto sm:px-3 sm:py-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-red-500"
+              className="flex h-9 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-red-500"
               title="Se déconnecter"
             >
               <LogOut size={18} />
-              <span className="ml-2 hidden sm:inline">Quitter</span>
+              <span className="hidden sm:inline">Quitter</span>
             </button>
+          </div>
+        </div>
+
+        {/* Ligne de recherche mobile (visible uniquement sur xs) */}
+        <div className="border-t border-gray-100 px-4 pb-3 sm:hidden dark:border-gray-700">
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Search className="h-4 w-4 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              className="focus:ring-primary-500 focus:border-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 py-2 pr-3 pl-9 text-sm text-gray-900 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+              placeholder="Chercher un nom, un service..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
       </nav>
@@ -344,6 +364,30 @@ export default function App() {
           </>
         )}
       </main>
+
+      <footer className="mt-auto border-t border-gray-200 bg-white py-4 dark:border-gray-700 dark:bg-gray-800">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 text-xs text-gray-400 sm:flex-row sm:px-6 dark:text-gray-500">
+          <span>
+            © {new Date().getFullYear()}{' '}
+            <span className="font-medium text-gray-500 dark:text-gray-400">
+              {import.meta.env.VITE_APP_COMPANY_NAME || 'Mon organisation'}
+            </span>
+            {' — '}
+            {import.meta.env.VITE_APP_TITLE || 'Annuaire des agents'}
+          </span>
+          <a
+            href="https://github.com/Cold-FR/NexTrombi-AD"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844a9.59 9.59 0 012.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+            </svg>
+            NexTrombi-AD
+          </a>
+        </div>
+      </footer>
 
       <PhotoUploadModal
         isOpen={isModalOpen}
