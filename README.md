@@ -9,6 +9,10 @@
 ![PHP](https://img.shields.io/badge/PHP-≥8.5-777BB4?logo=php)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+<p align="center">
+  <img src="https://i.imgur.com/MjiFiKr.png" alt="Capture d'écran" width="1280"/>
+</p>
+
 ---
 
 ## 📋 Table des matières
