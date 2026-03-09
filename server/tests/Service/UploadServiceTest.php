@@ -115,7 +115,6 @@ class UploadServiceTest extends TestCase
 
         $binaryData = $this->uploadService->handleAdUpload($file);
 
-        $this->assertIsString($binaryData);
         $this->assertNotEmpty($binaryData);
         $this->assertEquals("\xFF\xD8", substr($binaryData, 0, 2));
     }
