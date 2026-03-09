@@ -154,7 +154,7 @@ bun run format
 Nous utilisons [Conventional Commits](https://www.conventionalcommits.org/fr/) :
 
 ```
-<type>(<portée>): <description>
+<type>(<scope>): <description in english>
 ```
 
 ### Types autorisés
@@ -181,10 +181,11 @@ Nous utilisons [Conventional Commits](https://www.conventionalcommits.org/fr/) :
 ### Exemples
 
 ```
-feat(client): ajout du bouton de changement de thème
-fix(server): correction de l'authentification LDAP avec accents
-docs: mise à jour du README avec les nouvelles variables d'environnement
-chore(deps): mise à jour de Symfony vers 8.0.3
+feat(client): add theme toggle button
+fix(server): fix LDAP authentication with accents
+docs: update README with new environment variables
+chore(deps): bump Symfony to 8.0.3
+refactor(server): extract photo resizing logic to UploadService
 ```
 
 ---
@@ -211,7 +212,6 @@ NexTrombi-AD/
 │   ├── config/           # Configuration Symfony
 │   └── migrations/       # Migrations Doctrine
 ├── CONTRIBUTING.md       # Ce fichier
-├── CODE_OF_CONDUCT.md    # Code de conduite
 └── LICENSE               # Licence MIT
 ```
 
