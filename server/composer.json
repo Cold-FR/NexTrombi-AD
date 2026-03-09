@@ -121,6 +121,7 @@
         }
     },
     "require-dev": {
+        "dama/doctrine-test-bundle": "^8.6",
         "friendsofphp/php-cs-fixer": "^3.94",
         "phpro/grumphp": "^2.19",
         "phpstan/extension-installer": "^1.4",
