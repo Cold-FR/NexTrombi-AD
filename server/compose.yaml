@@ -22,7 +22,6 @@ services:
 
   samba-ad:
     image: nowsci/samba-domain
-    container_name: local-ad
     privileged: true
     environment:
       - DOMAIN=MAIRIE.LOCAL
