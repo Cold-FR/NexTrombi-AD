@@ -68,9 +68,9 @@ class UploadService
 
         $sourcePath = $file->getPathname();
         $image = match ($mimeType) {
-            'image/jpeg', 'image/jpg' => imagecreatefromjpeg($sourcePath),
-            'image/png' => imagecreatefrompng($sourcePath),
-            'image/webp' => imagecreatefromwebp($sourcePath),
+            'image/jpeg', 'image/jpg' => @imagecreatefromjpeg($sourcePath),
+            'image/png' => @imagecreatefrompng($sourcePath),
+            'image/webp' => @imagecreatefromwebp($sourcePath),
         };
 
         if (!$image) {
