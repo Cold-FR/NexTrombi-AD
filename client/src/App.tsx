@@ -2,11 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import { Search, Users, LogOut, Loader2, Sun, Moon } from 'lucide-react';
 import UserCard, { type User } from './components/UserCard';
 import PhotoUploadModal from './components/PhotoUploadModal';
+import ConfirmDeleteModal from './components/ConfirmDeleteModal';
+import ToastContainer from './components/ToastContainer';
 import { useTheme } from './hooks/useTheme';
+import { useToast } from './hooks/useToast';
 
 export default function App() {
   // --- THÈME ---
   const { theme, toggleTheme } = useTheme();
+
+  // --- TOASTS ---
+  const { toasts, success: toastSuccess, error: toastError, dismiss: toastDismiss } = useToast();
 
   // --- ÉTATS D'AUTHENTIFICATION ---
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
@@ -23,6 +29,11 @@ export default function App() {
   // États de la modale d'upload
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
+  // États de la modale de confirmation de suppression
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // --- ÉTATS POUR L'INFINITE SCROLL ---
   const [displayedCount, setDisplayedCount] = useState(24); // On affiche 24 cartes au début
@@ -113,7 +124,45 @@ export default function App() {
     localStorage.removeItem('roles');
     setToken(null);
     setRoles([]);
-    setUsers([]); // On vide la liste des utilisateurs de la mémoire
+    setUsers([]);
+  };
+
+  const handleDeletePhoto = (userId: string) => {
+    const u = users.find((usr) => usr.id === userId);
+    if (u) {
+      setUserToDelete(u);
+      setIsDeleteModalOpen(true);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!token || !userToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users/${userToDelete.id}/photo`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.ok) {
+        setUsers(users.map((u) => (u.id === userToDelete.id ? { ...u, photoUrl: null } : u)));
+        setIsDeleteModalOpen(false);
+        setUserToDelete(null);
+        toastSuccess('Photo supprimée avec succès.');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toastError(errorData.error ?? 'Impossible de supprimer la photo.');
+      }
+    } catch (error) {
+      console.error('Erreur réseau lors de la suppression :', error);
+      toastError('Erreur réseau lors de la suppression.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSavePhoto = async (userId: string, file: File) => {
@@ -138,17 +187,16 @@ export default function App() {
 
       if (response.ok) {
         const data = await response.json();
-
-        // On met à jour l'utilisateur dans le state local pour afficher la nouvelle photo immédiatement
         setUsers(users.map((u) => (u.id === userId ? { ...u, photoUrl: data.photoUrl } : u)));
-
-        setIsModalOpen(false); // On ferme la modale en cas de succès
+        setIsModalOpen(false);
+        toastSuccess('Photo mise à jour avec succès.');
       } else {
-        const errorData = await response.json();
-        console.error('Erreur du serveur :', errorData.error);
+        const errorData = await response.json().catch(() => ({}));
+        toastError(errorData.error ?? "Impossible d'enregistrer la photo.");
       }
     } catch (error) {
       console.error("Erreur réseau lors de l'envoi :", error);
+      toastError("Erreur réseau lors de l'envoi de la photo.");
     }
   };
 
@@ -167,7 +215,8 @@ export default function App() {
         );
 
         if (response.status === 401) {
-          handleLogout(); // Token expiré -> on déconnecte
+          handleLogout();
+          toastError('Session expirée, veuillez vous reconnecter.');
           return;
         }
 
@@ -175,11 +224,12 @@ export default function App() {
         setUsers(data);
       } catch (error) {
         console.error('Erreur lors de la récupération des agents', error);
+        toastError("Impossible de charger l'annuaire.");
       }
     };
 
     fetchUsers();
-  }, [token]);
+  }, [toastError, token]);
 
   // === RENDU : ÉCRAN DE CONNEXION ===
   if (!token) {
@@ -342,7 +392,7 @@ export default function App() {
                 <UserCard
                   key={user.id}
                   user={user}
-                  isAdmin={isAdmin} // <-- C'est le vrai JWT qui gère ça maintenant !
+                  isAdmin={isAdmin}
                   onEditPhoto={(id) => {
                     const u = users.find((usr) => usr.id === id);
                     if (u) {
@@ -350,6 +400,7 @@ export default function App() {
                       setIsModalOpen(true);
                     }
                   }}
+                  onDeletePhoto={handleDeletePhoto}
                 />
               ))}
             </div>
@@ -389,12 +440,25 @@ export default function App() {
         </div>
       </footer>
 
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setUserToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        user={userToDelete}
+        isLoading={isDeleting}
+      />
+
       <PhotoUploadModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         user={selectedUser}
         onSave={handleSavePhoto}
       />
+
+      <ToastContainer toasts={toasts} onDismiss={toastDismiss} />
     </div>
   );
 }

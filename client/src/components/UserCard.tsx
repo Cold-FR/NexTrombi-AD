@@ -1,4 +1,4 @@
-import { Mail, Phone, Camera } from 'lucide-react';
+import { Mail, Phone, Camera, Trash2 } from 'lucide-react';
 
 export type User = {
   id: string;
@@ -15,9 +15,10 @@ interface UserCardProps {
   user: User;
   isAdmin: boolean;
   onEditPhoto?: (userId: string) => void;
+  onDeletePhoto?: (userId: string) => void;
 }
 
-export default function UserCard({ user, isAdmin, onEditPhoto }: UserCardProps) {
+export default function UserCard({ user, isAdmin, onEditPhoto, onDeletePhoto }: UserCardProps) {
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
 
   return (
@@ -43,10 +44,21 @@ export default function UserCard({ user, isAdmin, onEditPhoto }: UserCardProps) 
           {isAdmin && onEditPhoto && (
             <button
               onClick={() => onEditPhoto(user.id)}
-              className="bg-primary-600 hover:bg-primary-700 absolute right-0 bottom-0 rounded-full p-2 text-white shadow-md ring-2 ring-white transition-opacity sm:opacity-0 sm:group-hover/card:opacity-100 dark:ring-gray-800"
+              className="bg-primary-600 hover:bg-primary-700 absolute bottom-0 left-0 rounded-full p-2 text-white shadow-md ring-2 ring-white transition-opacity sm:opacity-0 sm:group-hover/card:opacity-100 dark:ring-gray-800"
               title="Modifier la photo"
             >
               <Camera size={16} />
+            </button>
+          )}
+
+          {/* BOUTON DE SUPPRESSION (Admin seulement, uniquement si une photo existe) */}
+          {isAdmin && onDeletePhoto && user.photoUrl && (
+            <button
+              onClick={() => onDeletePhoto(user.id)}
+              className="absolute right-0 bottom-0 rounded-full bg-red-600 p-2 text-white shadow-md ring-2 ring-white transition-opacity hover:bg-red-700 sm:opacity-0 sm:group-hover/card:opacity-100 dark:ring-gray-800"
+              title="Supprimer la photo"
+            >
+              <Trash2 size={16} />
             </button>
           )}
         </div>
