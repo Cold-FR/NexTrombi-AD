@@ -70,7 +70,7 @@ export default function PhotoUploadModal({ isOpen, onClose, user, onSave }: Phot
                   </span>
                 </div>
               )}
-              <div className="bg-primary-600 absolute right-0 bottom-0 rounded-full p-2.5 text-white shadow-lg ring-4 ring-white dark:ring-gray-800">
+              <div className="bg-primary-600 absolute bottom-0 left-0 rounded-full p-2.5 text-white shadow-lg ring-4 ring-white dark:ring-gray-800">
                 <Upload size={16} />
               </div>
             </div>
