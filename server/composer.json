@@ -85,7 +85,7 @@
             "php bin/console lint:yaml config"
         ],
         "test:phpunit": [
-            "php bin/phpunit --colors=always --display-phpunit-notices"
+            "php bin/phpunit --colors=always --display-phpunit-notices --display-phpunit-deprecations"
         ],
         "test": [
             "@test:csfixer",
