@@ -8,18 +8,15 @@ use LdapRecord\Models\ActiveDirectory\User as LdapUser;
 use LdapRecord\Models\Model;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-class LdapConnection
+readonly class LdapConnection
 {
-    // On stocke la connexion dans une propriété privée de la classe
-    private ?Connection $connection = null;
-
     public function __construct(
-        #[Autowire('%env(LDAP_HOST)%')] private readonly string $host,
-        #[Autowire('%env(LDAP_PORT)%')] private readonly int $port,
-        #[Autowire('%env(LDAP_BASE_DN)%')] private readonly string $baseDn,
-        #[Autowire('%env(LDAP_SEARCH_DN)%')] private readonly string $username,
-        #[Autowire('%env(LDAP_SEARCH_PASSWORD)%')] private readonly string $password,
-        #[Autowire('%env(bool:LDAP_USE_TLS)%')] private readonly bool $useTls,
+        #[Autowire('%env(LDAP_HOST)%')] private string            $host,
+        #[Autowire('%env(LDAP_PORT)%')] private int               $port,
+        #[Autowire('%env(LDAP_BASE_DN)%')] private string         $baseDn,
+        #[Autowire('%env(LDAP_SEARCH_DN)%')] private string       $username,
+        #[Autowire('%env(LDAP_SEARCH_PASSWORD)%')] private string $password,
+        #[Autowire('%env(bool:LDAP_USE_TLS)%')] private bool      $useTls,
     ) {
         $this->connect();
     }
@@ -35,22 +32,12 @@ class LdapConnection
             'use_tls' => $this->useTls,
         ];
 
-        $this->connection = new Connection($config);
-
-        Container::addConnection($this->connection, 'default');
+        Container::addConnection(new Connection($config), 'default');
     }
 
-    /**
-     * Retourne l'objet connexion stocké localement.
-     * Beaucoup plus fiable que de redemander au Container global.
-     */
     public function getConnection(): Connection
     {
-        if (!$this->connection) {
-            $this->connect();
-        }
-
-        return $this->connection;
+        return Container::getConnection('default');
     }
 
     /**
