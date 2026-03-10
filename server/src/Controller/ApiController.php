@@ -163,4 +163,53 @@ class ApiController extends AbstractController
             return $this->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    #[Route('/api/users/{id}/photo', name: 'api_upload_photo', methods: ['DELETE'])]
+    public function deletePhoto(
+        string $id,
+        Request $request,
+        UploadService $uploadService,
+        LdapConnection $ldapConnection,
+        UserPhotoRepository $photoRepo,
+        EntityManagerInterface $em,
+    ): JsonResponse {
+        try {
+            if ('ad' === $this->photoStorageMode) {
+                // --- MODE ACTIVE DIRECTORY ---
+                $ldapConnection->getConnection();
+
+                // On cherche l'utilisateur dans l'AD
+                $user = User::findBy('samaccountname', $id);
+                if (!$user) {
+                    return $this->json(['error' => 'Utilisateur introuvable dans l\'AD.'], 404);
+                }
+
+                // On écrase l'attribut (LdapRecord gère l'encodage binaire tout seul)
+                $user->thumbnailphoto = null;
+                $user->save();
+            } else {
+                // --- MODE LOCAL (Base de données) ---
+                // On cherche s'il a déjà une photo en base
+                $userPhoto = $photoRepo->findOneBy(['ldapUsername' => $id]);
+
+                if ($userPhoto) {
+                    // Supprimer l'ancienne image physique si elle existe
+                    $oldPath = $this->getParameter('kernel.project_dir').'/public/uploads/photos/'.$userPhoto->getPhotoFilename();
+                    $fileSys = new Filesystem();
+                    if ($fileSys->exists($oldPath)) {
+                        $fileSys->remove($oldPath);
+                    }
+
+                    $em->remove($userPhoto);
+                    $em->flush();
+                }
+            }
+
+            return $this->json([
+                'message' => 'Photo supprimée avec succès',
+            ]);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
+        }
+    }
 }
