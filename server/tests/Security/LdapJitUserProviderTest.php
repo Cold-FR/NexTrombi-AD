@@ -94,4 +94,22 @@ class LdapJitUserProviderTest extends TestCase
 
         $this->assertContains('ROLE_ADMIN', $user->getRoles());
     }
+
+    public function testRefreshUserReloadsUser(): void
+    {
+        $existingUser = new User('dupont.j', ['ROLE_USER']);
+
+        $ldapUser = $this->createMock(LdapUser::class);
+        $ldapUser->method('getDn')->willReturn('cn=dupont.j,ou=users,dc=test,dc=local');
+
+        $this->ldapMock->expects($this->once())
+            ->method('findUserBySamAccountName')
+            ->with('dupont.j')
+            ->willReturn($ldapUser);
+
+        $refreshedUser = $this->provider->refreshUser($existingUser);
+
+        $this->assertInstanceOf(User::class, $refreshedUser);
+        $this->assertSame('dupont.j', $refreshedUser->getUserIdentifier());
+    }
 }
