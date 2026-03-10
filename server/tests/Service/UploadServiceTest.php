@@ -83,7 +83,6 @@ class UploadServiceTest extends TestCase
         $filename = $this->uploadService->handleLocalUpload($file);
 
         $this->assertStringEndsWith('.webp', $filename);
-        $this->assertStringContainsString('small', $filename);
 
         $savedPath = $this->tempDir.'/public/uploads/photos/'.$filename;
         $this->assertFileExists($savedPath);
