@@ -84,10 +84,10 @@ class ApiFunctionalTest extends WebTestCase
             // 1. L'Authenticator cherche l'utilisateur
             LdapFake::operation('search')->andReturn([
                 [
-                    'dn'             => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
+                    'dn' => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
                     'samaccountname' => ['dupont.j'],
-                    'objectclass'    => ['top', 'person', 'organizationalPerson', 'user'],
-                ]
+                    'objectclass' => ['top', 'person', 'organizationalPerson', 'user'],
+                ],
             ]),
             // 2. L'Authenticator vérifie le mot de passe
             LdapFake::operation('bind')
@@ -96,10 +96,10 @@ class ApiFunctionalTest extends WebTestCase
             // 3. Le UserProvider recharge l'utilisateur pour créer le Token
             LdapFake::operation('search')->andReturn([
                 [
-                    'dn'             => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
+                    'dn' => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
                     'samaccountname' => ['dupont.j'],
-                    'objectclass'    => ['top', 'person', 'organizationalPerson', 'user'],
-                ]
+                    'objectclass' => ['top', 'person', 'organizationalPerson', 'user'],
+                ],
             ]),
         ]);
 
@@ -124,9 +124,9 @@ class ApiFunctionalTest extends WebTestCase
             // 1. findByOrFail() cherche l'utilisateur
             LdapFake::operation('search')->andReturn([
                 [
-                    'dn'             => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
+                    'dn' => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
                     'samaccountname' => ['dupont.j'],
-                ]
+                ],
             ]),
             // 2. auth()->attempt() retourne false → mauvais mot de passe
             LdapFake::operation('bind')

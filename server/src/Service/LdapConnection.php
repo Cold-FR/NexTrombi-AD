@@ -11,12 +11,12 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 readonly class LdapConnection
 {
     public function __construct(
-        #[Autowire('%env(LDAP_HOST)%')] private string            $host,
-        #[Autowire('%env(LDAP_PORT)%')] private int               $port,
-        #[Autowire('%env(LDAP_BASE_DN)%')] private string         $baseDn,
-        #[Autowire('%env(LDAP_SEARCH_DN)%')] private string       $username,
+        #[Autowire('%env(LDAP_HOST)%')] private string $host,
+        #[Autowire('%env(LDAP_PORT)%')] private int $port,
+        #[Autowire('%env(LDAP_BASE_DN)%')] private string $baseDn,
+        #[Autowire('%env(LDAP_SEARCH_DN)%')] private string $username,
         #[Autowire('%env(LDAP_SEARCH_PASSWORD)%')] private string $password,
-        #[Autowire('%env(bool:LDAP_USE_TLS)%')] private bool      $useTls,
+        #[Autowire('%env(bool:LDAP_USE_TLS)%')] private bool $useTls,
     ) {
         $this->connect();
     }
@@ -43,7 +43,7 @@ readonly class LdapConnection
     /**
      * Encapsule l'appel statique LdapUser::findBy pour le rendre mockable dans les tests.
      */
-    public function findUserBySamAccountName(string $username): Model|null
+    public function findUserBySamAccountName(string $username): ?Model
     {
         return LdapUser::findBy('samaccountname', $username);
     }

@@ -3,11 +3,11 @@
 namespace App\Tests\Command;
 
 use App\Service\LdapConnection;
+use LdapRecord\Testing\DirectoryFake;
+use LdapRecord\Testing\LdapFake;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
-use LdapRecord\Testing\DirectoryFake;
-use LdapRecord\Testing\LdapFake;
 
 class TestLdapCommandTest extends KernelTestCase
 {
@@ -23,6 +23,16 @@ class TestLdapCommandTest extends KernelTestCase
 
         $command = $application->find('app:test-ldap');
         $this->commandTester = new CommandTester($command);
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            DirectoryFake::tearDown();
+        } catch (\Throwable) {
+            // Aucun fake actif
+        }
+        parent::tearDown();
     }
 
     public function testExecuteSuccess(): void
@@ -63,7 +73,6 @@ class TestLdapCommandTest extends KernelTestCase
 
         $this->commandTester->execute([]);
 
-        // On vérifie que le script passe bien dans le Catch (Lignes 49 à 56)
         $this->assertSame(1, $this->commandTester->getStatusCode());
         $this->assertStringContainsString('Erreur critique : Serveur LDAP injoignable', $this->commandTester->getDisplay());
         $this->assertStringContainsString('Hôte tenté :', $this->commandTester->getDisplay());

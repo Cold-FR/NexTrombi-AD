@@ -6,7 +6,6 @@ use App\Service\UploadService;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\String\Slugger\AsciiSlugger;
 
 class UploadServiceTest extends TestCase
 {
@@ -37,8 +36,7 @@ class UploadServiceTest extends TestCase
     private function createDummyImage(int $width, int $height, string $filename = 'test.jpg'): string
     {
         $path = $this->tempDir.'/'.$filename;
-        $image = imagecreatetruecolor($width, $height);
-        imagejpeg($image, $path);
+        imagejpeg(imagecreatetruecolor($width, $height), $path);
 
         return $path;
     }
@@ -120,7 +118,7 @@ class UploadServiceTest extends TestCase
     public function testHandleLocalUploadSupportsPng(): void
     {
         // On crée une vraie image PNG
-        $path = $this->tempDir . '/test.png';
+        $path = $this->tempDir.'/test.png';
         $img = imagecreatetruecolor(10, 10);
         imagepng($img, $path);
 
@@ -133,7 +131,7 @@ class UploadServiceTest extends TestCase
     public function testHandleLocalUploadSupportsWebp(): void
     {
         // On crée une vraie image WebP
-        $path = $this->tempDir . '/test.webp';
+        $path = $this->tempDir.'/test.webp';
         $img = imagecreatetruecolor(10, 10);
         imagewebp($img, $path);
 
@@ -147,7 +145,7 @@ class UploadServiceTest extends TestCase
     {
         // On crée un fichier qui COMMENCE par les octets d'un JPEG (\xFF\xD8)
         // Cela garantit que $file->getMimeType() renverra 'image/jpeg'
-        $path = $this->tempDir . '/fake_corrupt.jpg';
+        $path = $this->tempDir.'/fake_corrupt.jpg';
         file_put_contents($path, "\xFF\xD8\xFF\xE0\x00\x10\x4A\x46\x49\x46 Données corrompues");
 
         $file = new UploadedFile(

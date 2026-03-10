@@ -27,7 +27,11 @@ class ShowLdapStructureCommandTest extends KernelTestCase
 
     protected function tearDown(): void
     {
-        DirectoryFake::tearDown();
+        try {
+            DirectoryFake::tearDown();
+        } catch (\Throwable) {
+            // Aucun fake actif
+        }
         parent::tearDown();
     }
 
@@ -77,7 +81,7 @@ class ShowLdapStructureCommandTest extends KernelTestCase
                 [
                     'dn' => 'cn=Config,dc=mairie,dc=local',
                     'cn' => ['Config'],
-                ]
+                ],
             ]),
         ]);
 
@@ -111,9 +115,14 @@ class ShowLdapStructureCommandTest extends KernelTestCase
         // On simule un résultat sous forme d'Objet (comme le fait l'ORM LdapRecord)
         $mockObject = new class {
             public function getDn(): string
-            { return 'ou=objets,dc=mairie,dc=local'; }
+            {
+                return 'ou=objets,dc=mairie,dc=local';
+            }
+
             public function getFirstAttribute($attr): ?string
-            { return $attr === 'ou' ? 'Objets' : null; }
+            {
+                return 'ou' === $attr ? 'Objets' : null;
+            }
         };
 
         $fake = DirectoryFake::setup('default');
@@ -121,7 +130,6 @@ class ShowLdapStructureCommandTest extends KernelTestCase
             LdapFake::operation('bind')->andReturnResponse(),
             LdapFake::operation('search')->andReturn([$mockObject]),
         ]);
-
 
         $this->commandTester->execute([]);
 

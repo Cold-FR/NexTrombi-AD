@@ -26,9 +26,11 @@ class LdapJsonAuthenticatorTest extends KernelTestCase
     {
         $request = Request::create('/api/login');
         $this->assertFalse($this->authenticator->supports($request));
+    }
 
-        // Vérification que la bonne route + bonne méthode retourne true
-        $validRequest = Request::create('/api/login', 'POST');
-        $this->assertTrue($this->authenticator->supports($validRequest));
+    public function testSupportsReturnsTrueOnValidRequest(): void
+    {
+        $request = Request::create('/api/login', 'POST');
+        $this->assertTrue($this->authenticator->supports($request));
     }
 }
