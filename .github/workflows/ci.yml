@@ -31,6 +31,14 @@ jobs:
       - name: Installation des dépendances
         run: composer install --prefer-dist --no-progress --no-suggest --optimize-autoloader
 
+      - name: Génération des clés JWT pour les tests
+        run: php bin/console lexik:jwt:generate-keypair --env=test --no-interaction
+
+      - name: Préparation de la base de données de test
+        run: |
+          php bin/console doctrine:database:create --env=test --if-not-exists
+          php bin/console doctrine:schema:create --env=test --no-interaction
+
       - name: Run PHPUnit Tests
         run: composer test:phpunit
 
