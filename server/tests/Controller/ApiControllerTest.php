@@ -226,4 +226,91 @@ class ApiControllerTest extends WebTestCase
 
         unlink($tempFile);
     }
+
+    /**
+     * Reboot le kernel avec un APP_PHOTO_STORAGE_MODE personnalisé.
+     * Doit être appelé EN PREMIER dans le test, avant toute requête.
+     * Réenregistre LdapConnection dans le Container LdapRecord avant DirectoryFake::setup().
+     */
+    private function switchToAdMode(): KernelBrowser
+    {
+        putenv('APP_PHOTO_STORAGE_MODE=ad');
+        $_ENV['APP_PHOTO_STORAGE_MODE'] = 'ad';
+        $_SERVER['APP_PHOTO_STORAGE_MODE'] = 'ad';
+        static::ensureKernelShutdown();
+        $client = static::createClient();
+        $client->getContainer()->get(LdapConnection::class);
+        return $client;
+    }
+
+    public function testGetUsersInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+
+        DirectoryFake::setup('default')
+            ->getLdapConnection()->expect([
+                LdapFake::operation('search')->andReturn([
+                    [
+                        'dn'             => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
+                        'samaccountname' => ['dupont.j'],
+                        'givenname'      => ['Jean'],
+                        'sn'             => ['Dupont'],
+                        'thumbnailphoto' => [base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')],
+                    ]
+                ])
+            ]);
+
+        $user = new User('dupont.j', ['ROLE_USER']);
+        $client->loginUser($user, 'api');
+        $client->request('GET', '/api/users');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        // On vérifie que la photo est bien convertie en Base64
+        $this->assertStringStartsWith('data:image/jpeg;base64,', $data[0]['photoUrl']);
+
+        // On remet en mode local pour ne pas polluer les autres tests
+        putenv('APP_PHOTO_STORAGE_MODE=local');
+        $_ENV['APP_PHOTO_STORAGE_MODE'] = 'local';
+        unset($_SERVER['APP_PHOTO_STORAGE_MODE']);
+    }
+
+    public function testUploadPhotoSuccessInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+
+        DirectoryFake::setup('default')
+            ->getLdapConnection()->expect([
+                LdapFake::operation('search')->andReturn([
+                    [
+                        'dn'          => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
+                        'samaccountname' => ['dupont.j'],
+                        'objectclass' => ['top', 'person', 'organizationalPerson', 'user'],
+                    ]
+                ]),
+                LdapFake::operation('modifyBatch')->andReturn(true),
+            ]);
+
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $client->loginUser($user, 'api');
+
+        $tempFile = sys_get_temp_dir() . '/test_ad.jpg';
+        imagejpeg(imagecreatetruecolor(10, 10), $tempFile);
+        $uploadedFile = new UploadedFile($tempFile, 'test.jpg', 'image/jpeg', null, true);
+
+        $client->request('POST', '/api/users/dupont.j/photo', [], ['photo' => $uploadedFile]);
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        // Vérifie le message de succès (ligne 159) et l'URL Base64 (ligne 131)
+        $this->assertSame('Photo mise à jour avec succès', $data['message']);
+        $this->assertStringStartsWith('data:image/jpeg;base64,', $data['photoUrl']);
+
+        unlink($tempFile);
+        putenv('APP_PHOTO_STORAGE_MODE=local');
+        $_ENV['APP_PHOTO_STORAGE_MODE'] = 'local';
+        unset($_SERVER['APP_PHOTO_STORAGE_MODE']);
+    }
 }
