@@ -31,7 +31,7 @@ class ApiController extends AbstractController
         try {
             $nowFileTime = (time() + 11644473600) * 10000000;
 
-            // 1. On récupère les utilisateurs AD (Toujours obligatoire)
+            // On récupère les utilisateurs AD
             $results = User::in($this->usersOu)
                 ->rawFilter('(!(userAccountControl:1.2.840.113556.1.4.803:=2))')
                 ->rawFilter(sprintf('(|(accountExpires=0)(accountExpires=9223372036854775807)(accountExpires>=%d))', $nowFileTime))
@@ -41,7 +41,7 @@ class ApiController extends AbstractController
                 ->select(['samaccountname', 'givenname', 'sn', 'title', 'department', 'mail', 'telephonenumber', 'thumbnailphoto'])
                 ->get();
 
-            // 2. Si mode 'local', on précharge la base de données
+            // Si mode 'local', on précharge la base de données
             $photoMap = [];
             $baseUrl = $request->getSchemeAndHttpHost();
 
@@ -54,7 +54,7 @@ class ApiController extends AbstractController
 
             $users = [];
 
-            // 3. Formatage des données
+            // Formatage des données
             foreach ($results as $entry) {
                 $samaccountname = $entry->getFirstAttribute('samaccountname');
                 $photoUrl = null;
@@ -72,7 +72,6 @@ class ApiController extends AbstractController
                         $photoUrl = $baseUrl.'/uploads/photos/'.$photoMap[$samaccountname];
                     }
                 }
-                // --------------------------------
 
                 $users[] = [
                     'id' => $samaccountname,
@@ -115,7 +114,7 @@ class ApiController extends AbstractController
                 // --- MODE ACTIVE DIRECTORY ---
                 $ldapConnection->getConnection();
 
-                // On récupère le binaire JPEG ultra-léger généré par votre UploadService
+                // On récupère le binaire JPEG
                 $binaryJpeg = $uploadService->handleAdUpload($file);
 
                 // On cherche l'utilisateur dans l'AD

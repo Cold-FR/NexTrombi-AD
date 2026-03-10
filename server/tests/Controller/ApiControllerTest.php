@@ -1,0 +1,257 @@
+<?php
+
+namespace App\Tests\Controller;
+
+use App\Entity\UserPhoto;
+use App\Security\User;
+use App\Service\LdapConnection;
+use LdapRecord\LdapRecordException;
+use LdapRecord\Testing\DirectoryFake;
+use LdapRecord\Testing\LdapFake;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+
+class ApiControllerTest extends WebTestCase
+{
+    private KernelBrowser $client;
+
+    protected function setUp(): void
+    {
+        static::ensureKernelShutdown();
+        $this->client = static::createClient();
+        $this->client->getContainer()->get(LdapConnection::class);
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            DirectoryFake::tearDown();
+        } catch (\Throwable) {
+            // Aucun fake actif
+        }
+        parent::tearDown();
+    }
+
+    /**
+     * Retourne un tableau représentant une entrée LDAP avec des valeurs par défaut
+     * surchargeables, pour éviter la duplication dans chaque test.
+     *
+     * @param array<string, mixed> $overrides
+     *
+     * @return array<string, mixed>
+     */
+    private function makeLdapEntry(array $overrides = []): array
+    {
+        return array_merge([
+            'dn' => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
+            'samaccountname' => ['dupont.j'],
+            'givenname' => ['Jean'],
+            'sn' => ['Dupont'],
+            'title' => ['Développeur'],
+            'department' => ['Informatique'],
+            'mail' => ['dupont.j@mairie.fr'],
+            'telephonenumber' => ['0123456789'],
+        ], $overrides);
+    }
+
+    /**
+     * Crée un fichier JPEG temporaire valide et retourne son chemin.
+     * Penser à unlink() après usage.
+     */
+    private function createTempJpeg(string $name = 'test.jpg'): string
+    {
+        $path = sys_get_temp_dir().'/'.$name;
+        imagejpeg(imagecreatetruecolor(10, 10), $path);
+
+        return $path;
+    }
+
+    /**
+     * Reboot le kernel en mode 'ad' et réenregistre LdapConnection.
+     * Doit être appelé en premier dans le test, avant toute requête.
+     */
+    private function switchToAdMode(): KernelBrowser
+    {
+        putenv('APP_PHOTO_STORAGE_MODE=ad');
+        $_ENV['APP_PHOTO_STORAGE_MODE'] = 'ad';
+        $_SERVER['APP_PHOTO_STORAGE_MODE'] = 'ad';
+        static::ensureKernelShutdown();
+        $client = static::createClient();
+        $client->getContainer()->get(LdapConnection::class);
+
+        return $client;
+    }
+
+    /**
+     * Remet APP_PHOTO_STORAGE_MODE à 'local' après un test en mode AD.
+     */
+    private function resetAdMode(): void
+    {
+        putenv('APP_PHOTO_STORAGE_MODE=local');
+        $_ENV['APP_PHOTO_STORAGE_MODE'] = 'local';
+        unset($_SERVER['APP_PHOTO_STORAGE_MODE']);
+    }
+
+    /**
+     * Configure le fake LDAP et retourne l'objet LdapFake pour enregistrer les expectations.
+     */
+    private function setupLdapFake(): LdapFake
+    {
+        /** @var LdapFake $ldapFake */
+        $ldapFake = DirectoryFake::setup('default')->getLdapConnection();
+
+        return $ldapFake;
+    }
+
+    public function testGetUsersReturns503OnLdapError(): void
+    {
+        $this->setupLdapFake()
+            ->expect(
+                LdapFake::operation('search')->andThrow(new LdapRecordException('Connexion LDAP impossible.'))
+            );
+
+        $user = new User('dupont.j', ['ROLE_USER']);
+        $this->client->loginUser($user, 'api');
+
+        $this->client->request('GET', '/api/users');
+
+        $this->assertResponseStatusCodeSame(503);
+        $this->assertStringContainsString('Erreur LDAP', $this->client->getResponse()->getContent());
+    }
+
+    public function testGetUsersReturnsSuccess(): void
+    {
+        $this->setupLdapFake()
+            ->expect(LdapFake::operation('search')->andReturn([$this->makeLdapEntry()]));
+
+        $this->client->loginUser(new User('dupont.j', ['ROLE_USER']), 'api');
+        $this->client->request('GET', '/api/users');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertCount(1, $data);
+        $this->assertSame('dupont.j', $data[0]['id']);
+        $this->assertSame('Jean', $data[0]['firstName']);
+        $this->assertSame('Dupont', $data[0]['lastName']);
+        $this->assertSame('Développeur', $data[0]['jobTitle']);
+    }
+
+    public function testUploadPhotoSuccess(): void
+    {
+        $this->setupLdapFake()
+            ->expect([
+                LdapFake::operation('search')->andReturn([
+                    $this->makeLdapEntry(['objectclass' => ['top', 'person', 'organizationalPerson', 'user']]),
+                ]),
+                LdapFake::operation('modifyBatch')->andReturn(true),
+            ]);
+
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $tempFile = $this->createTempJpeg('test_photo_api.jpg');
+        $this->client->request('POST', '/api/users/1/photo', [], [
+            'photo' => new UploadedFile($tempFile, 'photo.jpg', 'image/jpeg', null, true),
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('Photo mise à jour avec succès', json_decode($this->client->getResponse()->getContent(), true)['message']);
+
+        unlink($tempFile);
+    }
+
+    public function testGetUsersWithLocalPhoto(): void
+    {
+        $this->setupLdapFake()
+            ->expect(LdapFake::operation('search')->andReturn([
+                $this->makeLdapEntry(['title' => null, 'department' => null, 'mail' => null, 'telephonenumber' => null]),
+            ]));
+
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+        $em->persist(new UserPhoto()->setLdapUsername('dupont.j')->setPhotoFilename('photo_existante.webp'));
+        $em->flush();
+
+        $this->client->loginUser(new User('dupont.j', ['ROLE_USER']), 'api');
+        $this->client->request('GET', '/api/users');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringContainsString('photo_existante.webp', json_decode($this->client->getResponse()->getContent(), true)[0]['photoUrl']);
+    }
+
+    public function testGetUsersInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+
+        $this->setupLdapFake()
+            ->expect(LdapFake::operation('search')->andReturn([
+                $this->makeLdapEntry([
+                    'thumbnailphoto' => [base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')],
+                ]),
+            ]));
+
+        $client->loginUser(new User('dupont.j', ['ROLE_USER']), 'api');
+        $client->request('GET', '/api/users');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringStartsWith(
+            'data:image/jpeg;base64,',
+            json_decode($client->getResponse()->getContent(), true)[0]['photoUrl']
+        );
+
+        $this->resetAdMode();
+    }
+
+    public function testUploadPhotoSuccessInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+
+        $this->setupLdapFake()
+            ->expect([
+                LdapFake::operation('search')->andReturn([
+                    $this->makeLdapEntry(['objectclass' => ['top', 'person', 'organizationalPerson', 'user']]),
+                ]),
+                LdapFake::operation('modifyBatch')->andReturn(true),
+            ]);
+
+        $client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $tempFile = $this->createTempJpeg('test_ad.jpg');
+        $client->request('POST', '/api/users/dupont.j/photo', [], [
+            'photo' => new UploadedFile($tempFile, 'test.jpg', 'image/jpeg', null, true),
+        ]);
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        // Vérifie le message de succès (ligne 159) et l'URL Base64 (ligne 131)
+        $this->assertSame('Photo mise à jour avec succès', $data['message']);
+        $this->assertStringStartsWith('data:image/jpeg;base64,', $data['photoUrl']);
+
+        unlink($tempFile);
+        $this->resetAdMode();
+    }
+
+    public function testUploadPhotoReturns404IfUserNotFoundInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+
+        $this->setupLdapFake()
+            ->expect(LdapFake::operation('search')->andReturn([]));
+
+        $client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $tempFile = $this->createTempJpeg('test_404.jpg');
+        $client->request('POST', '/api/users/inconnu/photo', [], [
+            'photo' => new UploadedFile($tempFile, 'test.jpg', 'image/jpeg', null, true),
+        ]);
+
+        $this->assertResponseStatusCodeSame(404);
+        $this->assertSame(
+            'Utilisateur introuvable dans l\'AD.',
+            json_decode($client->getResponse()->getContent(), true)['error']
+        );
+
+        unlink($tempFile);
+    }
+}
