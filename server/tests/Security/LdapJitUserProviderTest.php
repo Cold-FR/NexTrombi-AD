@@ -8,6 +8,7 @@ use App\Service\LdapConnection;
 use LdapRecord\Models\ActiveDirectory\User as LdapUser;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
+use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 // On utilise TestCase car on va mocker la seule dépendance (LdapConnection)
@@ -63,5 +64,17 @@ class LdapJitUserProviderTest extends TestCase
         $user = $provider->loadUserByIdentifier('dupont.j');
 
         $this->assertContains('ROLE_ADMIN', $user->getRoles());
+    }
+
+    public function testLoadUserByIdentifierThrowsExceptionWhenUserNotFound(): void
+    {
+        // On configure le mock pour qu'il ne trouve personne
+        $this->ldapMock->method('findUserBySamAccountName')
+            ->willReturn(null);
+
+        $this->expectException(UserNotFoundException::class);
+        $this->expectExceptionMessage('Utilisateur "inconnu" introuvable dans l\'AD.');
+
+        $this->provider->loadUserByIdentifier('inconnu');
     }
 }
