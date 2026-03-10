@@ -21,6 +21,7 @@
         "symfony/mime": "8.0.*",
         "symfony/monolog-bundle": "^4.0",
         "symfony/runtime": "8.0.*",
+        "symfony/uid": "8.0.*",
         "symfony/yaml": "8.0.*"
     },
     "config": {
@@ -83,10 +84,14 @@
         "test:yaml": [
             "php bin/console lint:yaml config"
         ],
+        "test:phpunit": [
+            "php bin/phpunit --colors=always --display-phpunit-notices --display-phpunit-deprecations"
+        ],
         "test": [
             "@test:csfixer",
             "@test:phpstan",
-            "@test:yaml"
+            "@test:yaml",
+            "@test:phpunit"
         ],
         "fix": [
             "@fix:csfixer"
@@ -101,6 +106,7 @@
         "fix:csfixer": "Corrige le code PHP avec PHP CS Fixer",
         "test:csfixer": "Teste le code PHP avec PHP CS Fixer",
         "test:phpstan": "Teste le code PHP avec PhpStan",
+        "test:phpunit": "Teste le code PHP avec PHPUnit",
         "test:yaml": "Vérifie les fichiers dans le répertoire config",
         "test": "Lance tous les tests",
         "fix": "Lance tous les scripts de correction",
@@ -117,12 +123,16 @@
         }
     },
     "require-dev": {
+        "dama/doctrine-test-bundle": "^8.6",
         "friendsofphp/php-cs-fixer": "^3.94",
         "phpro/grumphp": "^2.19",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-doctrine": "^2.0",
         "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^13.0",
+        "symfony/browser-kit": "8.0.*",
+        "symfony/css-selector": "8.0.*",
         "symfony/maker-bundle": "^1.66"
     }
 }

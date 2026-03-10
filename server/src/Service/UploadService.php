@@ -5,7 +5,7 @@ namespace App\Service;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Uid\Uuid;
 
 class UploadService
 {
@@ -14,7 +14,6 @@ class UploadService
 
     public function __construct(
         #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
-        private readonly SluggerInterface $slugger,
     ) {
     }
 
@@ -31,8 +30,7 @@ class UploadService
         // On redimensionne à une taille raisonnable pour un trombi (ex: 400x400 max)
         $resizedImage = $this->resizeImage($image, 400, 400);
 
-        $safeFilename = $this->slugger->slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
-        $newFilename = $safeFilename.'-'.uniqid().'.webp';
+        $newFilename = Uuid::v4()->toRfc4122().'.webp';
 
         // Sauvegarde en WebP (qualité 80)
         imagewebp($resizedImage, $uploadsDirectory.'/'.$newFilename, 80);
@@ -70,9 +68,9 @@ class UploadService
 
         $sourcePath = $file->getPathname();
         $image = match ($mimeType) {
-            'image/jpeg', 'image/jpg' => imagecreatefromjpeg($sourcePath),
-            'image/png' => imagecreatefrompng($sourcePath),
-            'image/webp' => imagecreatefromwebp($sourcePath),
+            'image/jpeg', 'image/jpg' => @imagecreatefromjpeg($sourcePath),
+            'image/png' => @imagecreatefrompng($sourcePath),
+            'image/webp' => @imagecreatefromwebp($sourcePath),
         };
 
         if (!$image) {

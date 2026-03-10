@@ -3,7 +3,6 @@
 namespace App\Security;
 
 use App\Service\LdapConnection;
-use LdapRecord\Models\ActiveDirectory\User as LdapUser;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
@@ -18,6 +17,7 @@ readonly class LdapJitUserProvider implements UserProviderInterface
     public function __construct(
         // On récupère le groupe Admin depuis le .env
         #[Autowire('%env(APP_LDAP_ADMIN_GROUP)%')] private string $adminGroup,
+        #[Autowire('%env(APP_LDAP_ADMIN_OU)%')] private string $adminOU,
         // Injecté pour initialiser la connexion dans le Container LdapRecord
         private LdapConnection $ldapConnection,
     ) {
@@ -29,7 +29,7 @@ readonly class LdapJitUserProvider implements UserProviderInterface
         $this->ldapConnection->getConnection();
 
         // 1. On cherche l'utilisateur dans l'AD
-        $ldapUser = LdapUser::findBy('samaccountname', $identifier);
+        $ldapUser = $this->ldapConnection->findUserBySamAccountName($identifier);
 
         if (!$ldapUser) {
             throw new UserNotFoundException(sprintf('Utilisateur "%s" introuvable dans l\'AD.', $identifier));
@@ -41,6 +41,10 @@ readonly class LdapJitUserProvider implements UserProviderInterface
 
         // 3. On vérifie s'il fait partie du groupe d'administration
         if (in_array($this->adminGroup, $memberOf, true)) {
+            $roles[] = 'ROLE_ADMIN';
+        }
+
+        if (str_contains(strtolower($ldapUser->getDn()), strtolower($this->adminOU))) {
             $roles[] = 'ROLE_ADMIN';
         }
 

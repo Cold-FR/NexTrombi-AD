@@ -56,7 +56,7 @@ class LdapJsonAuthenticator extends AbstractAuthenticator
             return new SelfValidatingPassport(
                 new UserBadge($username)
             );
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             throw new CustomUserMessageAuthenticationException('Identifiants invalides ou compte introuvable.');
         }
     }
