@@ -94,7 +94,7 @@ class ApiController extends AbstractController
         }
     }
 
-    #[Route('/api/users/{id}/photo', name: 'api_upload_photo', methods: ['POST'])]
+    #[Route('/api/users/{id}/photo', name: 'api_photo_upload', methods: ['POST'])]
     public function uploadPhoto(
         string $id,
         Request $request,
@@ -164,11 +164,9 @@ class ApiController extends AbstractController
         }
     }
 
-    #[Route('/api/users/{id}/photo', name: 'api_upload_photo', methods: ['DELETE'])]
+    #[Route('/api/users/{id}/photo', name: 'api_photo_delete', methods: ['DELETE'])]
     public function deletePhoto(
         string $id,
-        Request $request,
-        UploadService $uploadService,
         LdapConnection $ldapConnection,
         UserPhotoRepository $photoRepo,
         EntityManagerInterface $em,
