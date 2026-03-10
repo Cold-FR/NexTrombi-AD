@@ -116,4 +116,51 @@ class UploadServiceTest extends TestCase
         $this->assertNotEmpty($binaryData);
         $this->assertEquals("\xFF\xD8", substr($binaryData, 0, 2));
     }
+
+    public function testHandleLocalUploadSupportsPng(): void
+    {
+        // On crée une vraie image PNG
+        $path = $this->tempDir . '/test.png';
+        $img = imagecreatetruecolor(10, 10);
+        imagepng($img, $path);
+
+        $file = new UploadedFile($path, 'test.png', 'image/png', \UPLOAD_ERR_OK, true);
+
+        $filename = $this->uploadService->handleLocalUpload($file);
+        $this->assertStringEndsWith('.webp', $filename);
+    }
+
+    public function testHandleLocalUploadSupportsWebp(): void
+    {
+        // On crée une vraie image WebP
+        $path = $this->tempDir . '/test.webp';
+        $img = imagecreatetruecolor(10, 10);
+        imagewebp($img, $path);
+
+        $file = new UploadedFile($path, 'test.webp', 'image/webp', \UPLOAD_ERR_OK, true);
+
+        $filename = $this->uploadService->handleLocalUpload($file);
+        $this->assertStringEndsWith('.webp', $filename);
+    }
+
+    public function testValidateAndLoadImageThrowsExceptionOnCorruptImage(): void
+    {
+        // On crée un fichier qui COMMENCE par les octets d'un JPEG (\xFF\xD8)
+        // Cela garantit que $file->getMimeType() renverra 'image/jpeg'
+        $path = $this->tempDir . '/fake_corrupt.jpg';
+        file_put_contents($path, "\xFF\xD8\xFF\xE0\x00\x10\x4A\x46\x49\x46 Données corrompues");
+
+        $file = new UploadedFile(
+            $path,
+            'test.jpg',
+            'image/jpeg',
+            null,
+            true
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Impossible de lire l\'image.');
+
+        $this->uploadService->handleLocalUpload($file);
+    }
 }
