@@ -6,9 +6,4 @@ cd client
 # Vérification stricte de TypeScript
 bun run tsc --noEmit || exit 1
 
-bun run format || exit 1
-bun run lint:fix || exit 1
-
-# On remonte à la racine et on ajoute les corrections au commit
-cd ..
-git add client/src/
+bunx lint-staged || exit 1
