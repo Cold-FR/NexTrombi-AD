@@ -84,7 +84,7 @@
             "php bin/console lint:yaml config"
         ],
         "test:phpunit": [
-            "php bin/phpunit"
+            "php bin/phpunit --colors=always"
         ],
         "test": [
             "@test:csfixer",
