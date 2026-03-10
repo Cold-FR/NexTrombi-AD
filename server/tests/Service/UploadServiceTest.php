@@ -22,7 +22,6 @@ class UploadServiceTest extends TestCase
         // Initialisation du service
         $this->uploadService = new UploadService(
             $this->tempDir, // Remplace %kernel.project_dir%
-            new AsciiSlugger()
         );
     }
 
