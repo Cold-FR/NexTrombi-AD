@@ -4,6 +4,8 @@ namespace App\Service;
 
 use LdapRecord\Connection;
 use LdapRecord\Container;
+use LdapRecord\Models\ActiveDirectory\User as LdapUser;
+use LdapRecord\Models\Model;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class LdapConnection
@@ -49,5 +51,13 @@ class LdapConnection
         }
 
         return $this->connection;
+    }
+
+    /**
+     * Encapsule l'appel statique LdapUser::findBy pour le rendre mockable dans les tests.
+     */
+    public function findUserBySamAccountName(string $username): Model
+    {
+        return LdapUser::findBy('samaccountname', $username);
     }
 }
