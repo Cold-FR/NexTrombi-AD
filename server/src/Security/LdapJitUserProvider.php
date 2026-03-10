@@ -17,6 +17,7 @@ readonly class LdapJitUserProvider implements UserProviderInterface
     public function __construct(
         // On récupère le groupe Admin depuis le .env
         #[Autowire('%env(APP_LDAP_ADMIN_GROUP)%')] private string $adminGroup,
+        #[Autowire('%env(APP_LDAP_ADMIN_OU)%')] private string $adminOU,
         // Injecté pour initialiser la connexion dans le Container LdapRecord
         private LdapConnection $ldapConnection,
     ) {
@@ -43,7 +44,7 @@ readonly class LdapJitUserProvider implements UserProviderInterface
             $roles[] = 'ROLE_ADMIN';
         }
 
-        if (str_contains(strtolower($ldapUser->getDn()), 'ou=ntic')) {
+        if (str_contains(strtolower($ldapUser->getDn()), strtolower($this->adminOU))) {
             $roles[] = 'ROLE_ADMIN';
         }
 
