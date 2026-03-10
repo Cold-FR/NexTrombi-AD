@@ -106,6 +106,7 @@
         "fix:csfixer": "Corrige le code PHP avec PHP CS Fixer",
         "test:csfixer": "Teste le code PHP avec PHP CS Fixer",
         "test:phpstan": "Teste le code PHP avec PhpStan",
+        "test:phpunit": "Teste le code PHP avec PHPUnit",
         "test:yaml": "Vérifie les fichiers dans le répertoire config",
         "test": "Lance tous les tests",
         "fix": "Lance tous les scripts de correction",
