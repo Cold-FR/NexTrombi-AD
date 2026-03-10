@@ -33,3 +33,47 @@
     @apply cursor-pointer;
   }
 }
+
+@layer utilities {
+  /* ── Entrée : glisse depuis la droite ── */
+  @keyframes toast-enter {
+    from {
+      opacity: 0;
+      transform: translateX(calc(100% + 1.25rem));
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  /* ── Sortie : glisse vers la droite ── */
+  @keyframes toast-leave {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(calc(100% + 1.25rem));
+    }
+  }
+  /* ── Barre de progression ── */
+  @keyframes toast-bar {
+    from {
+      width: 100%;
+    }
+    to {
+      width: 0;
+    }
+  }
+
+  .toast-enter {
+    animation: toast-enter 0.3s ease both;
+  }
+  .toast-leave {
+    animation: toast-leave 0.3s ease both;
+  }
+  .toast-timer {
+    animation: toast-bar linear both;
+  }
+}
