@@ -43,7 +43,7 @@ readonly class LdapConnection
     /**
      * Encapsule l'appel statique LdapUser::findBy pour le rendre mockable dans les tests.
      */
-    public function findUserBySamAccountName(string $username): Model
+    public function findUserBySamAccountName(string $username): Model|null
     {
         return LdapUser::findBy('samaccountname', $username);
     }
