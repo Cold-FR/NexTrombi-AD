@@ -23,6 +23,7 @@ class LdapJitUserProviderTest extends TestCase
         $this->ldapMock = $this->createStub(LdapConnection::class);
         $this->provider = new LdapJitUserProvider(
             adminGroup: 'CN=Admins,DC=test,DC=local',
+            adminOU: 'OU=ntic,DC=test,DC=local',
             ldapConnection: $this->ldapMock,
         );
     }
@@ -58,6 +59,7 @@ class LdapJitUserProviderTest extends TestCase
 
         $provider = new LdapJitUserProvider(
             adminGroup: 'CN=Admins,DC=test,DC=local',
+            adminOU: 'OU=ntic,DC=test,DC=local',
             ldapConnection: $ldapMock,
         );
 
@@ -76,5 +78,32 @@ class LdapJitUserProviderTest extends TestCase
         $this->expectExceptionMessage('Utilisateur "inconnu" introuvable dans l\'AD.');
 
         $this->provider->loadUserByIdentifier('inconnu');
+    }
+
+    public function testRoleAdminIsAssignedViaNticOu(): void
+    {
+        $ldapUser = $this->createMock(LdapUser::class);
+        $ldapUser->expects($this->once())
+            ->method('getAttribute')
+            // On simule un utilisateur hors du groupe Admin, mais dans l'OU ntic
+            ->with('memberof')
+            ->willReturn([]);
+        $ldapUser->method('getDn')->willReturn('CN=Jean,OU=ntic,DC=test,DC=local');
+
+        $ldapMock = $this->createMock(LdapConnection::class);
+        $ldapMock->expects($this->once())
+            ->method('findUserBySamAccountName')
+            ->with('jean.ntic')
+            ->willReturn($ldapUser);
+
+        $provider = new LdapJitUserProvider(
+            adminGroup: 'CN=Admins,DC=test,DC=local',
+            adminOU: 'OU=ntic,DC=test,DC=local',
+            ldapConnection: $ldapMock,
+        );
+
+        $user = $provider->loadUserByIdentifier('jean.ntic');
+
+        $this->assertContains('ROLE_ADMIN', $user->getRoles());
     }
 }
