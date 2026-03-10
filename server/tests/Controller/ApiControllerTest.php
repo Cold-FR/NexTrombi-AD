@@ -313,4 +313,33 @@ class ApiControllerTest extends WebTestCase
         $_ENV['APP_PHOTO_STORAGE_MODE'] = 'local';
         unset($_SERVER['APP_PHOTO_STORAGE_MODE']);
     }
+
+    public function testUploadPhotoReturns404IfUserNotFoundInAdMode(): void
+    {
+        // On bascule en mode AD
+        $client = $this->switchToAdMode();
+
+        $fake = DirectoryFake::setup('default');
+        $fake->getLdapConnection()->expect([
+            // On simule une recherche qui ne renvoie rien (tableau vide)
+            LdapFake::operation('search')->andReturn([])
+        ]);
+
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $client->loginUser($user, 'api');
+
+        $tempFile = sys_get_temp_dir() . '/test_404.jpg';
+        imagejpeg(imagecreatetruecolor(10, 10), $tempFile);
+        $uploadedFile = new UploadedFile($tempFile, 'test.jpg', 'image/jpeg', null, true);
+
+        // Tentative d'upload pour un utilisateur inexistant "inconnu"
+        $client->request('POST', '/api/users/inconnu/photo', [], ['photo' => $uploadedFile]);
+
+        // On vérifie le code 404 (Ligne 123)
+        $this->assertResponseStatusCodeSame(404);
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('Utilisateur introuvable dans l\'AD.', $data['error']);
+
+        unlink($tempFile);
+    }
 }
