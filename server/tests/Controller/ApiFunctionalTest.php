@@ -15,15 +15,20 @@ class ApiFunctionalTest extends WebTestCase
 
     protected function setUp(): void
     {
-        // Boot le kernel une seule fois et force l'enregistrement de la connexion
-        // 'default' dans le Container LdapRecord (requis avant DirectoryFake::setup())
+        static::ensureKernelShutdown();
         $this->client = static::createClient();
         $this->client->getContainer()->get(LdapConnection::class);
     }
 
     protected function tearDown(): void
     {
-        DirectoryFake::tearDown();
+        // On ne teardown le fake que s'il a été setupé (évite l'appel à tearDown()
+        // sur la vraie Connection qui ne dispose pas de cette méthode)
+        try {
+            DirectoryFake::tearDown();
+        } catch (\Throwable) {
+            // Aucun fake actif, rien à nettoyer
+        }
         parent::tearDown();
     }
 

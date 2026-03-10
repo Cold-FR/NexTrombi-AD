@@ -18,17 +18,18 @@ class ApiControllerTest extends WebTestCase
 
     protected function setUp(): void
     {
-        // On crée le client une seule fois (et donc on boot le kernel une seule fois).
-        // On force l'instanciation de LdapConnection pour que la connexion 'default'
-        // soit enregistrée dans le Container LdapRecord avant DirectoryFake::setup().
+        static::ensureKernelShutdown();
         $this->client = static::createClient();
         $this->client->getContainer()->get(LdapConnection::class);
     }
 
     protected function tearDown(): void
     {
-        // On nettoie le faux LDAP après chaque test pour ne pas polluer les suivants
-        DirectoryFake::tearDown();
+        try {
+            DirectoryFake::tearDown();
+        } catch (\Throwable) {
+            // Aucun fake actif
+        }
         parent::tearDown();
     }
 
