@@ -6,6 +6,7 @@ use App\Security\LdapJitUserProvider;
 use App\Security\User;
 use App\Service\LdapConnection;
 use LdapRecord\Models\ActiveDirectory\User as LdapUser;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
@@ -13,6 +14,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 
 // On utilise TestCase car on va mocker la seule dépendance (LdapConnection)
 // et on n'a pas besoin de la base de données.
+#[AllowMockObjectsWithoutExpectations]
 class LdapJitUserProviderTest extends TestCase
 {
     private LdapConnection $ldapMock;
@@ -20,7 +22,7 @@ class LdapJitUserProviderTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->ldapMock = $this->createStub(LdapConnection::class);
+        $this->ldapMock = $this->createMock(LdapConnection::class);
         $this->provider = new LdapJitUserProvider(
             adminGroup: 'CN=Admins,DC=test,DC=local',
             adminOU: 'OU=ntic,DC=test,DC=local',
@@ -51,19 +53,12 @@ class LdapJitUserProviderTest extends TestCase
             ->willReturn(['CN=Admins,DC=test,DC=local']);
         $ldapUser->method('getDn')->willReturn('cn=dupont.j,ou=users,dc=test,dc=local');
 
-        $ldapMock = $this->createMock(LdapConnection::class);
-        $ldapMock->expects($this->once())
+        $this->ldapMock->expects($this->once())
             ->method('findUserBySamAccountName')
             ->with('dupont.j')
             ->willReturn($ldapUser);
 
-        $provider = new LdapJitUserProvider(
-            adminGroup: 'CN=Admins,DC=test,DC=local',
-            adminOU: 'OU=ntic,DC=test,DC=local',
-            ldapConnection: $ldapMock,
-        );
-
-        $user = $provider->loadUserByIdentifier('dupont.j');
+        $user = $this->provider->loadUserByIdentifier('dupont.j');
 
         $this->assertContains('ROLE_ADMIN', $user->getRoles());
     }
@@ -90,19 +85,12 @@ class LdapJitUserProviderTest extends TestCase
             ->willReturn([]);
         $ldapUser->method('getDn')->willReturn('CN=Jean,OU=ntic,DC=test,DC=local');
 
-        $ldapMock = $this->createMock(LdapConnection::class);
-        $ldapMock->expects($this->once())
+        $this->ldapMock->expects($this->once())
             ->method('findUserBySamAccountName')
             ->with('jean.ntic')
             ->willReturn($ldapUser);
 
-        $provider = new LdapJitUserProvider(
-            adminGroup: 'CN=Admins,DC=test,DC=local',
-            adminOU: 'OU=ntic,DC=test,DC=local',
-            ldapConnection: $ldapMock,
-        );
-
-        $user = $provider->loadUserByIdentifier('jean.ntic');
+        $user = $this->provider->loadUserByIdentifier('jean.ntic');
 
         $this->assertContains('ROLE_ADMIN', $user->getRoles());
     }
