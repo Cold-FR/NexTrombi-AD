@@ -35,11 +35,20 @@ class TestLdapCommandTest extends KernelTestCase
         parent::tearDown();
     }
 
+    /**
+     * Configure le fake LDAP et retourne l'objet LdapFake pour enregistrer les expectations.
+     */
+    private function setupLdapFake(): LdapFake
+    {
+        /** @var LdapFake $ldapFake */
+        $ldapFake = DirectoryFake::setup('default')->getLdapConnection();
+
+        return $ldapFake;
+    }
+
     public function testExecuteSuccess(): void
     {
-        // On simule une connexion LDAP réussie
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             LdapFake::operation('bind')->andReturnResponse(),
         ]);
 
@@ -51,9 +60,7 @@ class TestLdapCommandTest extends KernelTestCase
 
     public function testExecuteFailure(): void
     {
-        // On simule un échec de mot de passe (Bind)
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             LdapFake::operation('bind')->andReturnErrorResponse(),
         ]);
 
@@ -65,9 +72,7 @@ class TestLdapCommandTest extends KernelTestCase
 
     public function testExecuteCriticalError(): void
     {
-        // On simule un crash serveur dès la tentative de connexion
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             LdapFake::operation('connect')->andThrow(new \Exception('Serveur LDAP injoignable (Timeout)')),
         ]);
 

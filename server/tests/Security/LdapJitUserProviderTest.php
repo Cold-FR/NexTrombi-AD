@@ -7,6 +7,7 @@ use App\Security\User;
 use App\Service\LdapConnection;
 use LdapRecord\Models\ActiveDirectory\User as LdapUser;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
@@ -17,7 +18,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 #[AllowMockObjectsWithoutExpectations]
 class LdapJitUserProviderTest extends TestCase
 {
-    private LdapConnection $ldapMock;
+    private MockObject&LdapConnection $ldapMock;
     private LdapJitUserProvider $provider;
 
     protected function setUp(): void

@@ -32,6 +32,17 @@ class ApiFunctionalTest extends WebTestCase
         parent::tearDown();
     }
 
+    /**
+     * Configure le fake LDAP et retourne l'objet LdapFake pour enregistrer les expectations.
+     */
+    private function setupLdapFake(): LdapFake
+    {
+        /** @var LdapFake $ldapFake */
+        $ldapFake = DirectoryFake::setup('default')->getLdapConnection();
+
+        return $ldapFake;
+    }
+
     public function testLoginWithEmptyBodyReturns401(): void
     {
         $this->client->request('POST', '/api/login', [], [], ['CONTENT_TYPE' => 'application/json'], '{}');
@@ -78,9 +89,7 @@ class ApiFunctionalTest extends WebTestCase
 
     public function testLoginSuccessReturnsToken(): void
     {
-        $fake = DirectoryFake::setup('default');
-
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             // 1. L'Authenticator cherche l'utilisateur
             LdapFake::operation('search')->andReturn([
                 [
@@ -119,8 +128,7 @@ class ApiFunctionalTest extends WebTestCase
 
     public function testLoginFailureWithWrongPasswordReturns401(): void
     {
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             // 1. findByOrFail() cherche l'utilisateur
             LdapFake::operation('search')->andReturn([
                 [

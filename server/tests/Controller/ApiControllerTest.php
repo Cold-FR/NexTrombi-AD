@@ -93,11 +93,20 @@ class ApiControllerTest extends WebTestCase
         unset($_SERVER['APP_PHOTO_STORAGE_MODE']);
     }
 
+    /**
+     * Configure le fake LDAP et retourne l'objet LdapFake pour enregistrer les expectations.
+     */
+    private function setupLdapFake(): LdapFake
+    {
+        /** @var LdapFake $ldapFake */
+        $ldapFake = DirectoryFake::setup('default')->getLdapConnection();
+
+        return $ldapFake;
+    }
+
     public function testGetUsersReturns503OnLdapError(): void
     {
-        // On simule une panne du serveur LDAP lors de la recherche
-        DirectoryFake::setup('default')
-            ->getLdapConnection()
+        $this->setupLdapFake()
             ->expect(
                 LdapFake::operation('search')->andThrow(new LdapRecordException('Connexion LDAP impossible.'))
             );
@@ -113,8 +122,7 @@ class ApiControllerTest extends WebTestCase
 
     public function testGetUsersReturnsSuccess(): void
     {
-        DirectoryFake::setup('default')
-            ->getLdapConnection()
+        $this->setupLdapFake()
             ->expect(LdapFake::operation('search')->andReturn([$this->makeLdapEntry()]));
 
         $this->client->loginUser(new User('dupont.j', ['ROLE_USER']), 'api');
@@ -132,8 +140,7 @@ class ApiControllerTest extends WebTestCase
 
     public function testUploadPhotoSuccess(): void
     {
-        DirectoryFake::setup('default')
-            ->getLdapConnection()
+        $this->setupLdapFake()
             ->expect([
                 LdapFake::operation('search')->andReturn([
                     $this->makeLdapEntry(['objectclass' => ['top', 'person', 'organizationalPerson', 'user']]),
@@ -156,8 +163,7 @@ class ApiControllerTest extends WebTestCase
 
     public function testGetUsersWithLocalPhoto(): void
     {
-        DirectoryFake::setup('default')
-            ->getLdapConnection()
+        $this->setupLdapFake()
             ->expect(LdapFake::operation('search')->andReturn([
                 $this->makeLdapEntry(['title' => null, 'department' => null, 'mail' => null, 'telephonenumber' => null]),
             ]));
@@ -177,8 +183,7 @@ class ApiControllerTest extends WebTestCase
     {
         $client = $this->switchToAdMode();
 
-        DirectoryFake::setup('default')
-            ->getLdapConnection()
+        $this->setupLdapFake()
             ->expect(LdapFake::operation('search')->andReturn([
                 $this->makeLdapEntry([
                     'thumbnailphoto' => [base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=')],
@@ -201,8 +206,8 @@ class ApiControllerTest extends WebTestCase
     {
         $client = $this->switchToAdMode();
 
-        DirectoryFake::setup('default')
-            ->getLdapConnection()->expect([
+        $this->setupLdapFake()
+            ->expect([
                 LdapFake::operation('search')->andReturn([
                     $this->makeLdapEntry(['objectclass' => ['top', 'person', 'organizationalPerson', 'user']]),
                 ]),
@@ -229,11 +234,9 @@ class ApiControllerTest extends WebTestCase
 
     public function testUploadPhotoReturns404IfUserNotFoundInAdMode(): void
     {
-        // On bascule en mode AD
         $client = $this->switchToAdMode();
 
-        DirectoryFake::setup('default')
-            ->getLdapConnection()
+        $this->setupLdapFake()
             ->expect(LdapFake::operation('search')->andReturn([]));
 
         $client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');

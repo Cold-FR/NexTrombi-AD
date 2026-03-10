@@ -66,7 +66,6 @@ class UserPhotoRepositoryTest extends KernelTestCase
         $repository = $this->entityManager->getRepository(UserPhoto::class);
         $allPhotos = $repository->findAll();
 
-        $this->assertIsArray($allPhotos);
         $this->assertEmpty($allPhotos);
     }
 

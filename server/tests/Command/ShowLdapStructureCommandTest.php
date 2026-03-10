@@ -35,11 +35,20 @@ class ShowLdapStructureCommandTest extends KernelTestCase
         parent::tearDown();
     }
 
+    /**
+     * Configure le fake LDAP et retourne l'objet LdapFake pour enregistrer les expectations.
+     */
+    private function setupLdapFake(): LdapFake
+    {
+        /** @var LdapFake $ldapFake */
+        $ldapFake = DirectoryFake::setup('default')->getLdapConnection();
+
+        return $ldapFake;
+    }
+
     public function testExecuteAuthenticationFailure(): void
     {
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
-            // On simule un refus d'authentification (Ligne 40)
+        $this->setupLdapFake()->expect([
             LdapFake::operation('bind')->andReturnErrorResponse(),
         ]);
 
@@ -51,10 +60,8 @@ class ShowLdapStructureCommandTest extends KernelTestCase
 
     public function testExecuteNoResults(): void
     {
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             LdapFake::operation('bind')->andReturnResponse(),
-            // On simule une recherche qui ne trouve rien (Ligne 53)
             LdapFake::operation('search')->andReturn([]),
         ]);
 
@@ -66,8 +73,7 @@ class ShowLdapStructureCommandTest extends KernelTestCase
 
     public function testExecuteSuccessWithHierarchy(): void
     {
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             LdapFake::operation('bind')->andReturnResponse(),
             LdapFake::operation('search')->andReturn([
                 [
@@ -98,8 +104,7 @@ class ShowLdapStructureCommandTest extends KernelTestCase
 
     public function testExecuteCriticalError(): void
     {
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             LdapFake::operation('bind')->andReturnResponse(),
             LdapFake::operation('search')->andThrow(new \Exception('Serveur débranché')),
         ]);
@@ -119,14 +124,13 @@ class ShowLdapStructureCommandTest extends KernelTestCase
                 return 'ou=objets,dc=mairie,dc=local';
             }
 
-            public function getFirstAttribute($attr): ?string
+            public function getFirstAttribute(string $attr): ?string
             {
                 return 'ou' === $attr ? 'Objets' : null;
             }
         };
 
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             LdapFake::operation('bind')->andReturnResponse(),
             LdapFake::operation('search')->andReturn([$mockObject]),
         ]);
