@@ -24,7 +24,7 @@ export function useInfiniteScroll(filteredUsers: User[], searchTerm: string) {
           setDisplayedCount((prev) => prev + PAGE_SIZE);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.25 }
     );
 
     observer.observe(el);
