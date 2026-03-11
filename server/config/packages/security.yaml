@@ -29,9 +29,6 @@ security:
         # La route de connexion DOIT rester publique
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
 
-        # Seuls les admins peuvent faire un POST (uploader/modifier une photo)
-        - { path: ^/api/users, methods: [POST], roles: ROLE_ADMIN }
-
         # TOUT le reste de l'API (dont le GET /api/users) nécessite d'être connecté
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
