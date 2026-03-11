@@ -305,4 +305,76 @@ class ApiControllerTest extends WebTestCase
         $data = json_decode($this->client->getResponse()->getContent(), true);
         $this->assertSame('Photo supprimée avec succès', $data['message']);
     }
+
+    public function testDeletePhotoSuccessInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+
+        $fake = DirectoryFake::setup('default');
+        $fake->getLdapConnection()->expect([
+            // L'utilisateur existe
+            LdapFake::operation('search')->andReturn([
+                [
+                    'dn' => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
+                    'samaccountname' => ['dupont.j'],
+                    'thumbnailphoto' => ['binaire_a_supprimer'],
+                ],
+            ]),
+            // L'API va écraser sa photo (thumbnailphoto = null)
+            LdapFake::operation('modifyBatch')->andReturn(true),
+        ]);
+
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $client->loginUser($user, 'api');
+
+        $client->request('DELETE', '/api/users/dupont.j/photo');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('Photo supprimée avec succès', $data['message']);
+
+        $this->resetAdMode();
+    }
+
+    public function testDeletePhotoReturns404IfUserNotFoundInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+
+        $fake = DirectoryFake::setup('default');
+        $fake->getLdapConnection()->expect([
+            LdapFake::operation('search')->andReturn([]), // Aucun résultat
+        ]);
+
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $client->loginUser($user, 'api');
+
+        $client->request('DELETE', '/api/users/inconnu/photo');
+
+        $this->assertResponseStatusCodeSame(404);
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('Utilisateur introuvable dans l\'AD.', $data['error']);
+
+        $this->resetAdMode();
+    }
+
+    public function testDeletePhotoReturns500OnException(): void
+    {
+        $client = $this->switchToAdMode();
+
+        $fake = DirectoryFake::setup('default');
+        $fake->getLdapConnection()->expect([
+            LdapFake::operation('search')->andThrow(new \Exception('Erreur interne LDAP')),
+        ]);
+
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $client->loginUser($user, 'api');
+
+        $client->request('DELETE', '/api/users/dupont.j/photo');
+
+        $this->assertResponseStatusCodeSame(500);
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('Erreur interne LDAP', $data['error']);
+
+        $this->resetAdMode();
+    }
 }
