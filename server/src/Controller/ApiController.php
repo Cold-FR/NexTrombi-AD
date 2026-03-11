@@ -94,9 +94,9 @@ class ApiController extends AbstractController
         }
     }
 
-    #[Route('/api/users/{id}/photo', name: 'api_photo_upload', methods: ['POST'])]
+    #[Route('/api/users/{ldapUsername}/photo', name: 'api_photo_upload', requirements: ['ldapUsername' => '.+'], methods: ['POST'])]
     public function uploadPhoto(
-        string $id,
+        string $ldapUsername,
         Request $request,
         UploadService $uploadService,
         LdapConnection $ldapConnection,
@@ -118,7 +118,7 @@ class ApiController extends AbstractController
                 $binaryJpeg = $uploadService->handleAdUpload($file);
 
                 // On cherche l'utilisateur dans l'AD
-                $user = User::findBy('samaccountname', $id);
+                $user = User::findBy('samaccountname', $ldapUsername);
                 if (!$user) {
                     return $this->json(['error' => 'Utilisateur introuvable dans l\'AD.'], 404);
                 }
@@ -134,11 +134,11 @@ class ApiController extends AbstractController
                 $newFilename = $uploadService->handleLocalUpload($file);
 
                 // On cherche s'il a déjà une photo en base
-                $userPhoto = $photoRepo->findOneBy(['ldapUsername' => $id]);
+                $userPhoto = $photoRepo->findOneBy(['ldapUsername' => $ldapUsername]);
 
                 if (!$userPhoto) {
                     $userPhoto = new UserPhoto();
-                    $userPhoto->setLdapUsername($id);
+                    $userPhoto->setLdapUsername($ldapUsername);
                 } else {
                     // Supprimer l'ancienne image physique si elle existe
                     $oldPath = $this->getParameter('kernel.project_dir').'/public/uploads/photos/'.$userPhoto->getPhotoFilename();
@@ -164,9 +164,9 @@ class ApiController extends AbstractController
         }
     }
 
-    #[Route('/api/users/{id}/photo', name: 'api_photo_delete', methods: ['DELETE'])]
+    #[Route('/api/users/{ldapUsername}/photo', name: 'api_photo_delete', methods: ['DELETE'])]
     public function deletePhoto(
-        string $id,
+        string $ldapUsername,
         LdapConnection $ldapConnection,
         UserPhotoRepository $photoRepo,
         EntityManagerInterface $em,
@@ -177,7 +177,7 @@ class ApiController extends AbstractController
                 $ldapConnection->getConnection();
 
                 // On cherche l'utilisateur dans l'AD
-                $user = User::findBy('samaccountname', $id);
+                $user = User::findBy('samaccountname', $ldapUsername);
                 if (!$user) {
                     return $this->json(['error' => 'Utilisateur introuvable dans l\'AD.'], 404);
                 }
@@ -188,7 +188,7 @@ class ApiController extends AbstractController
             } else {
                 // --- MODE LOCAL (Base de données) ---
                 // On cherche s'il a déjà une photo en base
-                $userPhoto = $photoRepo->findOneBy(['ldapUsername' => $id]);
+                $userPhoto = $photoRepo->findOneBy(['ldapUsername' => $ldapUsername]);
 
                 if ($userPhoto) {
                     // Supprimer l'ancienne image physique si elle existe
