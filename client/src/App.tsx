@@ -90,7 +90,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col font-sans text-gray-900 dark:text-gray-100">
+    <div className="flex h-screen flex-col overflow-hidden font-sans text-gray-900 dark:text-gray-100">
       <AppNav
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -99,18 +99,20 @@ export default function App() {
         onLogout={handleLogout}
       />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-6 lg:p-8">
-        <UserGrid
-          allUsers={users}
-          visibleUsers={visibleUsers}
-          filteredCount={filteredUsers.length}
-          isAdmin={isAdmin}
-          hasMore={hasMore}
-          observerTarget={observerTarget}
-          onEditPhoto={openUpload}
-          onDeletePhoto={openDelete}
-        />
-      </main>
+      <div className="flex-1 overflow-x-clip overflow-y-auto">
+        <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
+          <UserGrid
+            allUsers={users}
+            visibleUsers={visibleUsers}
+            filteredCount={filteredUsers.length}
+            isAdmin={isAdmin}
+            hasMore={hasMore}
+            observerTarget={observerTarget}
+            onEditPhoto={openUpload}
+            onDeletePhoto={openDelete}
+          />
+        </main>
+      </div>
 
       <AppFooter />
 

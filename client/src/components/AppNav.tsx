@@ -50,7 +50,7 @@ export default function AppNav({
   onLogout,
 }: AppNavProps) {
   return (
-    <nav className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <nav className="relative z-10 border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       {/* Ligne principale */}
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         {/* Logo */}
@@ -90,7 +90,7 @@ export default function AppNav({
       </div>
 
       {/* Recherche mobile */}
-      <div className="border-t border-gray-100 px-4 pb-3 sm:hidden dark:border-gray-700">
+      <div className="px-4 pb-3 sm:hidden">
         <SearchInput value={searchTerm} onChange={onSearchChange} />
       </div>
     </nav>
