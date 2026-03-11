@@ -15,15 +15,15 @@ import { useInfiniteScroll } from './hooks/useInfiniteScroll';
 import { AnimatePresence, motion, type Transition } from 'motion/react';
 
 const pageVariants = {
-  initial: { opacity: 0, scale: 0.96, filter: 'blur(6px)' },
-  in: { opacity: 1, scale: 1, filter: 'blur(0px)' },
-  out: { opacity: 0, scale: 1.04, filter: 'blur(6px)' },
+  initial: { opacity: 0, y: 40 },
+  in: { opacity: 1, y: 0 },
+  out: { opacity: 0, y: -40 },
 };
 
 const pageTransition: Transition = {
-  type: 'tween',
-  ease: 'anticipate',
-  duration: 0.45,
+  type: 'spring',
+  stiffness: 260,
+  damping: 22,
 };
 
 export default function App() {
