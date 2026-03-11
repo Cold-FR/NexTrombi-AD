@@ -255,4 +255,54 @@ class ApiControllerTest extends WebTestCase
         unlink($tempFile);
         $this->resetAdMode();
     }
+
+    public function testDeletePhotoSuccessInLocalModeWithExistingPhoto(): void
+    {
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $this->client->loginUser($user, 'api');
+
+        // On injecte manuellement une photo dans la BDD
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+        $userPhoto = new UserPhoto();
+        $userPhoto->setLdapUsername('dupont.j');
+        $userPhoto->setPhotoFilename('photo_a_supprimer.webp');
+        $em->persist($userPhoto);
+        $em->flush();
+
+        // On crée un faux fichier physique sur le disque
+        $projectDir = $this->client->getContainer()->getParameter('kernel.project_dir');
+        $uploadsDir = $projectDir.'/public/uploads/photos';
+        @mkdir($uploadsDir, 0777, true);
+        $filePath = $uploadsDir.'/photo_a_supprimer.webp';
+        file_put_contents($filePath, 'fake image data');
+
+        // On lance la requête de suppression
+        $this->client->request('DELETE', '/api/users/dupont.j/photo');
+
+        // On vérifie le succès
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Photo supprimée avec succès', $data['message']);
+
+        // On vérifie que le fichier a bien été supprimé du disque
+        $this->assertFileDoesNotExist($filePath);
+
+        // On vérifie que l'entité a bien été supprimée de la BDD
+        $deletedPhoto = $em->getRepository(UserPhoto::class)->findOneBy(['ldapUsername' => 'dupont.j']);
+        $this->assertNull($deletedPhoto);
+    }
+
+    public function testDeletePhotoSuccessInLocalModeWithoutExistingPhoto(): void
+    {
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $this->client->loginUser($user, 'api');
+
+        // On supprime la photo d'un utilisateur qui n'en a pas
+        $this->client->request('DELETE', '/api/users/inconnu/photo');
+
+        // La route doit retourner un succès quand même (idempotence)
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Photo supprimée avec succès', $data['message']);
+    }
 }
