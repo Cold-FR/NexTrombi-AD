@@ -391,12 +391,12 @@ class ApiControllerTest extends WebTestCase
         $em->flush();
 
         $projectDir = $this->client->getContainer()->getParameter('kernel.project_dir');
-        $uploadsDir = $projectDir . '/public/uploads/photos';
+        $uploadsDir = $projectDir.'/public/uploads/photos';
         @mkdir($uploadsDir, 0777, true);
-        $oldFilePath = $uploadsDir . '/old_photo.webp';
+        $oldFilePath = $uploadsDir.'/old_photo.webp';
         file_put_contents($oldFilePath, 'old content');
 
-        $tempFile = sys_get_temp_dir() . '/new_photo.jpg';
+        $tempFile = sys_get_temp_dir().'/new_photo.jpg';
         imagejpeg(imagecreatetruecolor(10, 10), $tempFile);
         $uploadedFile = new UploadedFile($tempFile, 'photo.jpg', 'image/jpeg', null, true);
 
@@ -414,7 +414,7 @@ class ApiControllerTest extends WebTestCase
         $this->client->loginUser($user, 'api');
 
         // On envoie un fichier texte pour forcer une erreur dans le UploadService
-        $tempFile = sys_get_temp_dir() . '/invalid.txt';
+        $tempFile = sys_get_temp_dir().'/invalid.txt';
         file_put_contents($tempFile, 'Ceci n\'est pas une image');
 
         $uploadedFile = new UploadedFile(
