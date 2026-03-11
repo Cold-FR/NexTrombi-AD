@@ -14,6 +14,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class ApiController extends AbstractController
 {
@@ -23,6 +24,7 @@ class ApiController extends AbstractController
     ) {
     }
 
+    #[IsGranted('ROLE_USER')]
     #[Route('/api/users', name: 'api_users', methods: ['GET'])]
     public function getUsers(LdapConnection $ldapConnection, UserPhotoRepository $photoRepo, Request $request): JsonResponse
     {
@@ -94,6 +96,7 @@ class ApiController extends AbstractController
         }
     }
 
+    #[IsGranted('ROLE_ADMIN')]
     #[Route('/api/users/{ldapUsername}/photo', name: 'api_photo_upload', requirements: ['ldapUsername' => '.+'], methods: ['POST'])]
     public function uploadPhoto(
         string $ldapUsername,
@@ -164,6 +167,7 @@ class ApiController extends AbstractController
         }
     }
 
+    #[IsGranted('ROLE_ADMIN')]
     #[Route('/api/users/{ldapUsername}/photo', name: 'api_photo_delete', methods: ['DELETE'])]
     public function deletePhoto(
         string $ldapUsername,
