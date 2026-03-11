@@ -35,9 +35,7 @@ export default function LoginPage({
           <div className="bg-primary-600 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-sm">
             <Users size={28} />
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-            Annuaire Interne
-          </h2>
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">NexTrombi-AD</h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Connectez-vous avec vos identifiants Windows
           </p>
@@ -53,8 +51,8 @@ export default function LoginPage({
                 name="username"
                 type="text"
                 required
-                className="focus:ring-primary-500 focus:border-primary-500 w-full rounded-lg border border-gray-300 px-3 py-2 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                placeholder="jdupont"
+                className="focus:ring-primary-500 focus:border-primary-500 w-full rounded-lg border border-gray-300 px-3 py-2 transition-colors placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                placeholder="dupont.j"
               />
             </div>
             <div>

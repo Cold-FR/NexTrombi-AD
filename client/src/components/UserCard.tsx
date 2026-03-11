@@ -23,7 +23,7 @@ export default function UserCard({ user, isAdmin, onEditPhoto, onDeletePhoto }: 
 
   return (
     <div className="group/card w-full rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800">
-      <div className="flex flex-col items-center px-4 pt-6 pb-6">
+      <div className="flex h-full flex-col items-center px-4 pt-6 pb-6">
         {/* AVATAR CONTAINER */}
         <div className="relative mb-4">
           {user.photoUrl ? (
@@ -64,10 +64,16 @@ export default function UserCard({ user, isAdmin, onEditPhoto, onDeletePhoto }: 
         </div>
 
         {/* INFORMATIONS */}
-        <h5 className="mb-1 text-center text-xl font-medium text-gray-900 dark:text-white">
+        <h5
+          className="mb-1 line-clamp-2 w-full text-center text-xl font-medium text-gray-900 dark:text-white"
+          title={`${user.firstName} ${user.lastName}`}
+        >
           {user.firstName} {user.lastName}
         </h5>
-        <span className="mb-3 flex h-10 items-center text-center text-sm text-gray-500 dark:text-gray-400">
+        <span
+          className="mb-3 line-clamp-3 flex min-h-10 w-full items-center justify-center text-center text-sm text-gray-500 dark:text-gray-400"
+          title={user.jobTitle}
+        >
           {user.jobTitle}
         </span>
 
