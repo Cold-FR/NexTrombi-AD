@@ -31,13 +31,12 @@ export default function UserCard({ user, isAdmin, onEditPhoto, onDeletePhoto }: 
   return (
     <motion.div
       variants={itemVariants}
-      whileHover={{ boxShadow: '0 10px 30px -8px rgba(0,0,0,0.15)' }}
       transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-      className="group/card w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+      className="w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
     >
       <div className="flex h-full flex-col items-center px-4 pt-6 pb-6">
         {/* AVATAR CONTAINER */}
-        <div className="relative mb-4">
+        <div className="group/card relative mb-4">
           {user.photoUrl ? (
             <img
               className="h-24 w-24 rounded-full border-2 border-gray-50 object-cover shadow-sm dark:border-gray-700"
