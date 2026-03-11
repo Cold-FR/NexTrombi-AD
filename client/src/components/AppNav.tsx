@@ -1,4 +1,4 @@
-import { Search, Users, LogOut, Sun, Moon } from 'lucide-react';
+import { Search, Users, LogOut, Sun, Moon, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
 
@@ -16,11 +16,19 @@ function SearchInput({ value, onChange, className }: SearchInputProps) {
       </div>
       <input
         type="text"
-        className="focus:ring-primary-500 focus:border-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 py-2 pr-3 pl-9 text-sm text-gray-900 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+        className="focus:ring-primary-500 focus:border-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 py-2 pr-9 pl-9 text-sm text-gray-900 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
         placeholder="Chercher un nom, un service..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
+      {value && (
+        <div
+          className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3 hover:opacity-75"
+          onClick={() => onChange('')}
+        >
+          <X className="h-4 w-4 text-gray-400" />
+        </div>
+      )}
     </div>
   );
 }
