@@ -97,6 +97,6 @@
   }
   to {
     /* Le masque s'agrandit pour couvrir tout l'écran depuis ce même point */
-    clip-path: circle(110% at var(--x, 50%) var(--y, 50%));
+    clip-path: circle(150% at var(--x, 50%) var(--y, 50%));
   }
 }
