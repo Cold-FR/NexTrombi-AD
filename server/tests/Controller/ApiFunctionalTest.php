@@ -69,7 +69,7 @@ class ApiFunctionalTest extends WebTestCase
 
     public function testPostPhotoWithoutTokenReturns401(): void
     {
-        $this->client->request('POST', '/api/users/1/photo');
+        $this->client->request('POST', '/api/users/user/photo');
 
         $this->assertResponseStatusCodeSame(401);
     }
@@ -80,7 +80,7 @@ class ApiFunctionalTest extends WebTestCase
         $user = new User('admin_user', ['ROLE_ADMIN']);
         $this->client->loginUser($user, 'api');
 
-        $this->client->request('POST', '/api/users/1/photo');
+        $this->client->request('POST', '/api/users/admin_user/photo');
 
         $this->assertResponseStatusCodeSame(400);
         $data = json_decode($this->client->getResponse()->getContent(), true);

@@ -151,7 +151,7 @@ class ApiControllerTest extends WebTestCase
         $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
 
         $tempFile = $this->createTempJpeg('test_photo_api.jpg');
-        $this->client->request('POST', '/api/users/1/photo', [], [
+        $this->client->request('POST', '/api/users/admin_user/photo', [], [
             'photo' => new UploadedFile($tempFile, 'photo.jpg', 'image/jpeg', null, true),
         ]);
 
