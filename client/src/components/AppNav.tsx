@@ -1,4 +1,6 @@
 import { Search, Users, LogOut, Sun, Moon } from 'lucide-react';
+import { motion } from 'motion/react';
+import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
 
 interface SearchInputProps {
   value: string;
@@ -62,24 +64,28 @@ export default function AppNav({
           />
 
           {/* Bouton thème */}
-          <button
+          <motion.button
             onClick={toggleTheme}
+            whileHover={iconBtnHover}
+            whileTap={iconBtnTap}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
             title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
             aria-label="Changer de thème"
           >
             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          </motion.button>
 
           {/* Bouton déconnexion */}
-          <button
+          <motion.button
             onClick={onLogout}
+            whileHover={btnHover}
+            whileTap={btnTap}
             className="flex h-9 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-red-500"
             title="Se déconnecter"
           >
             <LogOut size={18} />
             <span className="hidden sm:inline">Quitter</span>
-          </button>
+          </motion.button>
         </div>
       </div>
 
