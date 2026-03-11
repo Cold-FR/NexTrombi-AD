@@ -9,7 +9,7 @@ export const iconBtnHover = { scale: 1.1 };
 export const iconBtnTap = { scale: 0.9 };
 
 // Transition lever/coucher de soleil — easings séparés x/y pour tracer un arc
-const sunMoonDuration = 0.3;
+const sunMoonDuration = 0.25;
 export const sunMoonEnter = {
   x: { duration: sunMoonDuration, ease: 'linear' as const },
   y: { duration: sunMoonDuration, ease: 'easeOut' as const },

@@ -78,30 +78,25 @@
   }
 }
 
-/* On désactive le fondu croisé par défaut de l'API */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
 
-/* On s'assure que le NOUVEAU thème passe par-dessus l'ancien pendant l'animation */
 ::view-transition-new(root) {
   z-index: 9999;
-}
 
-/* L'animation personnalisée : le cercle s'ouvre de droite à gauche */
-::view-transition-new(root) {
-  animation: swoosh-in 0.8s cubic-bezier(0.25, 1, 0.3, 1);
+  animation: swoosh-in 0.5s ease-out;
 }
 
 @keyframes swoosh-in {
   from {
-    /* Le masque démarre tout petit, collé au centre-droit de l'écran */
-    clip-path: circle(0% at 100% 50%);
+    /* Le masque démarre à la position exacte du clic (var(--x) et var(--y)) */
+    clip-path: circle(0% at var(--x, 50%) var(--y, 50%));
   }
   to {
-    /* Le masque s'agrandit jusqu'à couvrir tout l'écran (150% garantit de toucher les coins) */
-    clip-path: circle(150% at 100% 50%);
+    /* Le masque s'agrandit pour couvrir tout l'écran depuis ce même point */
+    clip-path: circle(110% at var(--x, 50%) var(--y, 50%));
   }
 }

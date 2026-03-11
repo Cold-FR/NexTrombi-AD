@@ -4,7 +4,7 @@ import { iconBtnTap, sunMoonEnter, sunMoonExit } from '../lib/motionVariants';
 
 interface ThemeToggleButtonProps {
   theme: string;
-  toggleTheme: () => void;
+  toggleTheme: (e: React.MouseEvent) => void;
   className?: string;
 }
 
@@ -15,7 +15,7 @@ export default function ThemeToggleButton({
 }: ThemeToggleButtonProps) {
   return (
     <motion.button
-      onClick={toggleTheme}
+      onClick={(e) => toggleTheme(e)}
       whileTap={iconBtnTap}
       className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 ${className ?? ''}`}
       title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}

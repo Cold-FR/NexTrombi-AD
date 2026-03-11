@@ -19,10 +19,17 @@ export function useTheme() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = (event?: React.MouseEvent) => {
     const isDark = theme === 'dark';
 
-    // Si le navigateur ne supporte pas l'API (vieux navigateurs), on fait le changement classique
+    // On capture la position de la souris (ou le centre par défaut)
+    const x = event?.clientX ?? window.innerWidth / 2;
+    const y = event?.clientY ?? window.innerHeight / 2;
+
+    // On passe ces coordonnées au CSS via des variables
+    document.documentElement.style.setProperty('--x', `${x}px`);
+    document.documentElement.style.setProperty('--y', `${y}px`);
+
     if (!document.startViewTransition) {
       setTheme(isDark ? 'light' : 'dark');
       return;
