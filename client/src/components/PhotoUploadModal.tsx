@@ -2,7 +2,14 @@ import { useState, useCallback } from 'react';
 import { Upload, X } from 'lucide-react';
 import { type User } from './UserCard';
 import { AnimatePresence, motion } from 'motion/react';
-import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
+import {
+  btnHover,
+  btnTap,
+  iconBtnHover,
+  iconBtnTap,
+  overlayVariants,
+  modalVariants,
+} from '../lib/motionVariants';
 
 interface PhotoUploadModalProps {
   isOpen: boolean;
@@ -46,12 +53,19 @@ export default function PhotoUploadModal({ isOpen, onClose, user, onSave }: Phot
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm transition-opacity">
+        <motion.div
+          variants={overlayVariants}
+          initial="hidden"
+          animate="show"
+          exit="exit"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm"
+        >
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }} // Commence petit
-            animate={{ opacity: 1, scale: 1 }} // Grandit avec un effet de ressort (par défaut)
-            exit={{ opacity: 0, scale: 0.8 }} // Rétrécit à la fermeture
-            className="relative w-full max-w-md rounded-xl border border-gray-100 bg-white shadow-2xl duration-200 dark:border-gray-700 dark:bg-gray-800"
+            variants={modalVariants}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            className="relative w-full max-w-md rounded-xl border border-gray-100 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800"
           >
             <div className="flex items-center justify-between rounded-t-xl border-b border-gray-200 bg-gray-50/50 px-5 py-4 dark:border-gray-700 dark:bg-gray-800/50">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -129,7 +143,7 @@ export default function PhotoUploadModal({ isOpen, onClose, user, onSave }: Phot
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
