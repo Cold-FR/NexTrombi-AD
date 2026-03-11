@@ -109,7 +109,7 @@ export default function App() {
             exit="out"
             variants={pageVariants}
             transition={pageTransition}
-            className="absolute inset-0 min-h-screen w-full"
+            className="absolute inset-0 min-h-screen w-full overflow-y-auto"
           >
             <LoginPage
               onSubmit={handleLogin}
