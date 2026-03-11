@@ -27,11 +27,15 @@ export default function LoginPage({
         onClick={toggleTheme}
         whileHover={iconBtnHover}
         whileTap={iconBtnTap}
-        className="fixed top-4 right-4 flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+        className="group fixed top-4 right-4 flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
         title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
         aria-label="Changer de thème"
       >
-        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        {theme === 'dark' ? (
+          <Sun size={18} className="transition-colors group-hover:text-yellow-400" />
+        ) : (
+          <Moon size={18} className="transition-colors group-hover:text-violet-500" />
+        )}
       </motion.button>
 
       <div className="w-full max-w-md space-y-8 rounded-xl border border-gray-100 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800">
