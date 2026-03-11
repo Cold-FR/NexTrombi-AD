@@ -377,4 +377,34 @@ class ApiControllerTest extends WebTestCase
 
         $this->resetAdMode();
     }
+
+    public function testUploadPhotoReplacesOldLocalPhotoFile(): void
+    {
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $this->client->loginUser($user, 'api');
+
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+        $userPhoto = new UserPhoto();
+        $userPhoto->setLdapUsername('dupont.j');
+        $userPhoto->setPhotoFilename('old_photo.webp');
+        $em->persist($userPhoto);
+        $em->flush();
+
+        $projectDir = $this->client->getContainer()->getParameter('kernel.project_dir');
+        $uploadsDir = $projectDir . '/public/uploads/photos';
+        @mkdir($uploadsDir, 0777, true);
+        $oldFilePath = $uploadsDir . '/old_photo.webp';
+        file_put_contents($oldFilePath, 'old content');
+
+        $tempFile = sys_get_temp_dir() . '/new_photo.jpg';
+        imagejpeg(imagecreatetruecolor(10, 10), $tempFile);
+        $uploadedFile = new UploadedFile($tempFile, 'photo.jpg', 'image/jpeg', null, true);
+
+        $this->client->request('POST', '/api/users/dupont.j/photo', [], ['photo' => $uploadedFile]);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertFileDoesNotExist($oldFilePath);
+
+        unlink($tempFile);
+    }
 }
