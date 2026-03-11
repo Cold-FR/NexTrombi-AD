@@ -1,4 +1,5 @@
 import { Mail, Phone, Camera, Trash2 } from 'lucide-react';
+import { memo } from 'react';
 import { motion } from 'motion/react';
 import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
 
@@ -20,18 +21,25 @@ interface UserCardProps {
   onDeletePhoto?: (userId: string) => void;
 }
 
-export default function UserCard({ user, isAdmin, onEditPhoto, onDeletePhoto }: UserCardProps) {
-  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 },
+};
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 }, // Commence transparent et un peu plus bas
-    show: { opacity: 1, y: 0 }, // Glisse vers sa place normale
-  };
+const itemTransition = { type: 'spring' as const, stiffness: 300, damping: 22 };
+
+export default memo(function UserCard({
+  user,
+  isAdmin,
+  onEditPhoto,
+  onDeletePhoto,
+}: UserCardProps) {
+  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
 
   return (
     <motion.div
       variants={itemVariants}
-      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+      transition={itemTransition}
       className="w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
     >
       <div className="flex h-full flex-col items-center px-4 pt-6 pb-6">
@@ -122,4 +130,4 @@ export default function UserCard({ user, isAdmin, onEditPhoto, onDeletePhoto }: 
       </div>
     </motion.div>
   );
-}
+});

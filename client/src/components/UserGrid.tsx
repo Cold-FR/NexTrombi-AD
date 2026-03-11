@@ -1,4 +1,5 @@
 import { Loader2, SearchX } from 'lucide-react';
+import { memo } from 'react';
 import UserCard, { type User } from './UserCard';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -50,7 +51,12 @@ interface UserGridProps {
   onDeletePhoto: (id: string) => void;
 }
 
-export default function UserGrid({
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
+};
+
+export default memo(function UserGrid({
   allUsers,
   visibleUsers,
   filteredCount,
@@ -61,11 +67,6 @@ export default function UserGrid({
   onEditPhoto,
   onDeletePhoto,
 }: UserGridProps) {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.06 } },
-  };
-
   const activeKey =
     allUsers.length === 0 || isSearching ? 'skeleton' : filteredCount === 0 ? 'empty' : 'grid';
 
@@ -139,4 +140,4 @@ export default function UserGrid({
       )}
     </>
   );
-}
+});

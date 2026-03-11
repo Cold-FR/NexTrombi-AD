@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { type User } from './components/UserCard';
 import LoginPage from './components/LoginPage';
 import AppNav from './components/AppNav';
@@ -66,21 +66,27 @@ export default function App() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const openUpload = (id: string) => {
-    const u = users.find((usr) => usr.id === id);
-    if (u) {
-      setSelectedUser(u);
-      setIsUploadOpen(true);
-    }
-  };
+  const openUpload = useCallback(
+    (id: string) => {
+      const u = users.find((usr) => usr.id === id);
+      if (u) {
+        setSelectedUser(u);
+        setIsUploadOpen(true);
+      }
+    },
+    [users]
+  );
 
-  const openDelete = (id: string) => {
-    const u = users.find((usr) => usr.id === id);
-    if (u) {
-      setUserToDelete(u);
-      setIsDeleteOpen(true);
-    }
-  };
+  const openDelete = useCallback(
+    (id: string) => {
+      const u = users.find((usr) => usr.id === id);
+      if (u) {
+        setUserToDelete(u);
+        setIsDeleteOpen(true);
+      }
+    },
+    [users]
+  );
 
   const confirmDelete = async () => {
     if (!userToDelete) return;
