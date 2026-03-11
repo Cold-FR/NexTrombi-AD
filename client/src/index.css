@@ -40,6 +40,38 @@
 }
 
 @layer utilities {
+  /* Scrollbar fine et discrète — ne décale pas le layout */
+  .scrollbar-overlay {
+    overflow-y: auto;
+    scrollbar-gutter: stable both-edges;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .scrollbar-overlay:hover {
+    scrollbar-color: rgb(156 163 175 / 0.5) transparent;
+  }
+
+  /* Chromium : scrollbar 4px transparente par défaut, visible au hover */
+  .scrollbar-overlay::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-overlay::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-overlay::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 99px;
+  }
+
+  .scrollbar-overlay:hover::-webkit-scrollbar-thumb {
+    background: rgb(156 163 175 / 0.5);
+  }
+}
+
+@layer utilities {
   /* ── Entrée : glisse depuis la droite ── */
   @keyframes toast-enter {
     from {

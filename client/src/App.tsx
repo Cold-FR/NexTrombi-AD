@@ -99,7 +99,7 @@ export default function App() {
   };
 
   return (
-    <>
+    <div className="relative h-screen overflow-hidden">
       <AnimatePresence mode="wait">
         {!token ? (
           <motion.div
@@ -137,7 +137,7 @@ export default function App() {
               onLogout={handleLogout}
             />
 
-            <div className="flex-1 overflow-x-clip overflow-y-auto">
+            <div className="scrollbar-overlay flex-1">
               <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
                 <UserGrid
                   allUsers={users}
@@ -178,6 +178,6 @@ export default function App() {
 
       {/* ToastContainer hors AnimatePresence pour ne pas être affecté par les transitions */}
       <ToastContainer toasts={toasts} onDismiss={toastDismiss} />
-    </>
+    </div>
   );
 }
