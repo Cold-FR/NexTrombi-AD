@@ -30,7 +30,7 @@ export default function LoginPage({
         className="fixed top-4 right-4 shadow-sm"
       />
 
-      <div className="w-full max-w-md space-y-8 rounded-xl border border-gray-100 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+      <div className="w-full max-w-md space-y-4 rounded-xl border border-gray-100 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800">
         <div className="text-center">
           <div className="bg-primary-600 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-sm">
             <Users size={28} />
@@ -41,7 +41,7 @@ export default function LoginPage({
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={onSubmit}>
+        <form className="space-y-6" onSubmit={onSubmit}>
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -99,7 +99,11 @@ export default function LoginPage({
             whileTap={isLoading ? {} : btnTap}
             className="bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 flex w-full justify-center rounded-lg border border-transparent px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
           >
-            {isLoading ? <Loader2 className="animate-spin" size={20} /> : 'Se connecter'}
+            {isLoading ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              'Accéder au trombinoscope'
+            )}
           </motion.button>
         </form>
       </div>
