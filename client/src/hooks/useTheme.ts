@@ -19,7 +19,19 @@ export function useTheme() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  const toggleTheme = () => {
+    const isDark = theme === 'dark';
+
+    // Si le navigateur ne supporte pas l'API (vieux navigateurs), on fait le changement classique
+    if (!document.startViewTransition) {
+      setTheme(isDark ? 'light' : 'dark');
+      return;
+    }
+
+    document.startViewTransition(() => {
+      setTheme(isDark ? 'light' : 'dark');
+    });
+  };
 
   return { theme, toggleTheme };
 }
