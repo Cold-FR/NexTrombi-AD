@@ -21,8 +21,18 @@ interface UserCardProps {
 export default function UserCard({ user, isAdmin, onEditPhoto, onDeletePhoto }: UserCardProps) {
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
 
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 }, // Commence transparent et un peu plus bas
+    show: { opacity: 1, y: 0 }, // Glisse vers sa place normale
+  };
+
   return (
-    <div className="group/card w-full rounded-xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800">
+    <motion.div
+      variants={itemVariants}
+      whileHover={{ boxShadow: '0 10px 30px -8px rgba(0,0,0,0.15)' }}
+      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+      className="group/card w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+    >
       <div className="flex h-full flex-col items-center px-4 pt-6 pb-6">
         {/* AVATAR CONTAINER */}
         <div className="relative mb-4">
@@ -101,6 +111,6 @@ export default function UserCard({ user, isAdmin, onEditPhoto, onDeletePhoto }: 
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
