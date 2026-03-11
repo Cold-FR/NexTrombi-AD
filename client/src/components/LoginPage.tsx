@@ -1,4 +1,5 @@
-import { Loader2, Sun, Moon, Users } from 'lucide-react';
+import { Loader2, Sun, Moon, Users, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 
 interface LoginPageProps {
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => Promise<void>;
@@ -15,6 +16,8 @@ export default function LoginPage({
   theme,
   toggleTheme,
 }: LoginPageProps) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 font-sans sm:px-6 lg:px-8 dark:bg-gray-900">
       {/* Bouton thème coin haut droit */}
@@ -58,13 +61,28 @@ export default function LoginPage({
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Mot de passe
               </label>
-              <input
-                name="password"
-                type="password"
-                required
-                className="focus:ring-primary-500 focus:border-primary-500 w-full rounded-lg border border-gray-300 px-3 py-2 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  className="focus:ring-primary-500 focus:border-primary-500 w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 transition-colors placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onMouseDown={() => setShowPassword(true)}
+                  onMouseUp={() => setShowPassword(false)}
+                  onMouseLeave={() => setShowPassword(false)}
+                  onTouchStart={() => setShowPassword(true)}
+                  onTouchEnd={() => setShowPassword(false)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  tabIndex={-1}
+                  aria-label="Maintenir pour afficher le mot de passe"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           </div>
 
