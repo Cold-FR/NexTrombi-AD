@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { Loader2, SearchX } from 'lucide-react';
 import UserCard, { type User } from './UserCard';
 import { motion } from 'motion/react';
 
@@ -34,9 +34,38 @@ export default function UserGrid({
   // Chargement initial
   if (allUsers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-        <Loader2 size={48} className="text-primary-600 mb-4 animate-spin" />
-        <p>Chargement de l'annuaire...</p>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div
+            key={i}
+            className="w-full rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
+          >
+            {/* Avatar */}
+            <div className="mb-4 flex justify-center">
+              <div className="h-24 w-24 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
+            </div>
+            {/* Nom */}
+            <div className="mb-2 flex justify-center">
+              <div className="h-4 w-32 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700" />
+            </div>
+            {/* Poste */}
+            <div className="mb-1 flex justify-center">
+              <div className="h-3 w-40 animate-pulse rounded-full bg-gray-100 dark:bg-gray-700/60" />
+            </div>
+            <div className="mb-6 flex justify-center">
+              <div className="h-3 w-28 animate-pulse rounded-full bg-gray-100 dark:bg-gray-700/60" />
+            </div>
+            {/* Badge service */}
+            <div className="mb-6 flex justify-center">
+              <div className="h-5 w-20 animate-pulse rounded-md bg-gray-100 dark:bg-gray-700/60" />
+            </div>
+            {/* Boutons */}
+            <div className="flex gap-2">
+              <div className="h-9 flex-1 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-700/60" />
+              <div className="h-9 w-10 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -44,9 +73,24 @@ export default function UserGrid({
   // Aucun résultat de recherche
   if (filteredCount === 0) {
     return (
-      <div className="py-20 text-center text-gray-500">
-        Aucun collaborateur trouvé pour cette recherche.
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="flex flex-col items-center justify-center py-24"
+      >
+        {/* Icône avec halo */}
+        <div className="relative mb-6 flex items-center justify-center">
+          <div className="absolute h-24 w-24 rounded-full bg-gray-100 dark:bg-gray-800" />
+          <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white text-gray-400 shadow-sm dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-500">
+            <SearchX size={28} />
+          </div>
+        </div>
+        <p className="text-base font-semibold text-gray-700 dark:text-gray-300">Aucun résultat</p>
+        <p className="mt-1 max-w-xs text-center text-sm text-gray-400 dark:text-gray-500">
+          Aucun collaborateur ne correspond à votre recherche.
+        </p>
+      </motion.div>
     );
   }
 
@@ -71,7 +115,7 @@ export default function UserGrid({
 
       {hasMore && (
         <div ref={observerTarget} className="mt-4 flex w-full justify-center py-10">
-          <Loader2 className="animate-spin text-gray-400" size={32} />
+          <Loader2 className="text-primary-500 animate-spin" size={28} />
         </div>
       )}
     </>
