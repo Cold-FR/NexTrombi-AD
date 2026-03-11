@@ -51,8 +51,8 @@ export default function LoginPage({
                 name="username"
                 type="text"
                 required
-                placeholder="jdupont"
                 className="focus:ring-primary-500 focus:border-primary-500 w-full rounded-lg border border-gray-300 px-3 py-2 transition-colors placeholder:text-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder:text-gray-500"
+                placeholder="dupont.j"
               />
             </div>
             <div>
