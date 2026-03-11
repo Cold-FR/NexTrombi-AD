@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { type Toast, type ToastType } from '../hooks/useToast';
+import { AnimatePresence, motion } from 'motion/react';
+import { iconBtnHover, iconBtnTap } from '../lib/motionVariants';
 
 /* ── Icônes ── */
 const ICONS: Record<ToastType, React.ReactNode> = {
@@ -45,16 +47,11 @@ interface ToastItemProps {
 }
 
 function ToastItem({ toast, onDismiss }: ToastItemProps) {
-  const [leaving, setLeaving] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
   const autoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const dismiss = () => {
-    if (leaving) return;
-    setLeaving(true);
-  };
+  const dismiss = () => onDismiss(toast.id);
 
-  /* Lance le timer auto au montage */
   useEffect(() => {
     autoRef.current = setTimeout(dismiss, toast.duration);
     return () => {
@@ -63,12 +60,6 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* Supprime du state une fois l'animation de sortie terminée */
-  const handleAnimEnd = () => {
-    if (leaving) onDismiss(toast.id);
-  };
-
-  /* Pause au hover */
   const handleMouseEnter = () => {
     if (autoRef.current) clearTimeout(autoRef.current);
     if (barRef.current) barRef.current.style.animationPlayState = 'paused';
@@ -84,10 +75,13 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
   };
 
   return (
-    <div
+    <motion.div
       role="alert"
-      className={leaving ? 'toast-leave' : 'toast-enter'}
-      onAnimationEnd={handleAnimEnd}
+      layout
+      initial={{ opacity: 0, x: 80, scale: 0.95 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 80, scale: 0.95 }}
+      transition={{ type: 'spring', stiffness: 320, damping: 28 }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -98,8 +92,10 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
           <p className="flex-1 pt-px text-sm leading-snug font-medium text-gray-800 dark:text-gray-200">
             {toast.message}
           </p>
-          <button
+          <motion.button
             onClick={dismiss}
+            whileHover={iconBtnHover}
+            whileTap={iconBtnTap}
             className="-mt-0.5 -mr-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-200"
             aria-label="Fermer"
           >
@@ -111,7 +107,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-          </button>
+          </motion.button>
         </div>
         {/* Barre de progression */}
         <div className="absolute right-0 bottom-0 left-0 h-0.5 bg-gray-100 dark:bg-gray-700">
@@ -122,7 +118,7 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
           />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -133,13 +129,13 @@ interface ToastContainerProps {
 }
 
 export default function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
-  if (toasts.length === 0) return null;
-
   return (
-    <div aria-live="polite" className="fixed top-5 right-5 z-100 flex flex-col gap-3">
-      {toasts.map((t) => (
-        <ToastItem key={t.id} toast={t} onDismiss={onDismiss} />
-      ))}
+    <div aria-live="polite" className="fixed top-29 right-4 z-100 flex flex-col gap-3 sm:top-22">
+      <AnimatePresence initial={false}>
+        {toasts.map((t) => (
+          <ToastItem key={t.id} toast={t} onDismiss={onDismiss} />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

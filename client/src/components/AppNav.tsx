@@ -1,4 +1,7 @@
-import { Search, Users, LogOut, Sun, Moon } from 'lucide-react';
+import { Search, Users, LogOut, X } from 'lucide-react';
+import { motion } from 'motion/react';
+import { btnHover, btnTap } from '../lib/motionVariants';
+import ThemeToggleButton from './ThemeToggleButton';
 
 interface SearchInputProps {
   value: string;
@@ -14,11 +17,19 @@ function SearchInput({ value, onChange, className }: SearchInputProps) {
       </div>
       <input
         type="text"
-        className="focus:ring-primary-500 focus:border-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 py-2 pr-3 pl-9 text-sm text-gray-900 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+        className="focus:ring-primary-500 focus:border-primary-500 block w-full rounded-lg border border-gray-300 bg-gray-50 py-2 pr-9 pl-9 text-sm text-gray-900 transition-colors dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
         placeholder="Chercher un nom, un service..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
+      {value && (
+        <div
+          className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3 hover:opacity-75"
+          onClick={() => onChange('')}
+        >
+          <X className="h-4 w-4 text-gray-400" />
+        </div>
+      )}
     </div>
   );
 }
@@ -39,7 +50,7 @@ export default function AppNav({
   onLogout,
 }: AppNavProps) {
   return (
-    <nav className="sticky top-0 z-20 border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+    <nav className="relative z-10 border-b border-gray-200 bg-white shadow-sm [scrollbar-gutter:stable] dark:border-gray-700 dark:bg-gray-800">
       {/* Ligne principale */}
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         {/* Logo */}
@@ -53,7 +64,7 @@ export default function AppNav({
         </div>
 
         {/* Actions droite */}
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-3">
           {/* Recherche desktop */}
           <SearchInput
             value={searchTerm}
@@ -62,29 +73,24 @@ export default function AppNav({
           />
 
           {/* Bouton thème */}
-          <button
-            onClick={toggleTheme}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-            title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
-            aria-label="Changer de thème"
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <ThemeToggleButton theme={theme} toggleTheme={toggleTheme} />
 
           {/* Bouton déconnexion */}
-          <button
+          <motion.button
             onClick={onLogout}
+            whileHover={btnHover}
+            whileTap={btnTap}
             className="flex h-9 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-red-500"
             title="Se déconnecter"
           >
             <LogOut size={18} />
             <span className="hidden sm:inline">Quitter</span>
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* Recherche mobile */}
-      <div className="border-t border-gray-100 px-4 pb-3 sm:hidden dark:border-gray-700">
+      <div className="px-4 pb-3 sm:hidden">
         <SearchInput value={searchTerm} onChange={onSearchChange} />
       </div>
     </nav>
