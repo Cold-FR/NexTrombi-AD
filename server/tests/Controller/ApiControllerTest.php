@@ -310,8 +310,7 @@ class ApiControllerTest extends WebTestCase
     {
         $client = $this->switchToAdMode();
 
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             // L'utilisateur existe
             LdapFake::operation('search')->andReturn([
                 [
@@ -340,8 +339,7 @@ class ApiControllerTest extends WebTestCase
     {
         $client = $this->switchToAdMode();
 
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             LdapFake::operation('search')->andReturn([]), // Aucun résultat
         ]);
 
@@ -361,8 +359,7 @@ class ApiControllerTest extends WebTestCase
     {
         $client = $this->switchToAdMode();
 
-        $fake = DirectoryFake::setup('default');
-        $fake->getLdapConnection()->expect([
+        $this->setupLdapFake()->expect([
             LdapFake::operation('search')->andThrow(new \Exception('Erreur interne LDAP')),
         ]);
 
