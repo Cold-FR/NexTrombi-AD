@@ -1,9 +1,24 @@
 #!/usr/bin/env sh
 
-# On descend dans le dossier client car Git s'exécute depuis la racine
+# ==========================================
+# ⚛️ FRONTEND (React / Vite / Bun)
+# ==========================================
+
+echo "🎨 Vérification du Frontend..."
 cd client
-
-# Vérification stricte de TypeScript
 bun run tsc --noEmit || exit 1
-
 bunx lint-staged || exit 1
+
+# On remonte à la racine du projet
+cd ..
+
+# ==========================================
+# 🐘 BACKEND (Symfony / PHP)
+# ==========================================
+
+echo "🐘 Vérification du Backend (GrumPHP)..."
+cd server
+
+# On lance spécifiquement la commande de hook de GrumPHP
+# (pour qu'il n'analyse que les fichiers modifiés dans le commit)
+php vendor/bin/grumphp git:pre-commit || exit 1
