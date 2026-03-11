@@ -253,5 +253,6 @@ class ApiControllerTest extends WebTestCase
         );
 
         unlink($tempFile);
+        $this->resetAdMode();
     }
 }
