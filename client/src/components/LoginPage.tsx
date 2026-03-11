@@ -35,9 +35,7 @@ export default function LoginPage({
           <div className="bg-primary-600 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-sm">
             <Users size={28} />
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">
-            Annuaire Interne
-          </h2>
+          <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">NexTrombi-AD</h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
             Connectez-vous avec vos identifiants Windows
           </p>
