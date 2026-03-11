@@ -12,6 +12,19 @@ import { useToast } from './hooks/useToast';
 import { useAuth } from './hooks/useAuth';
 import { useUsers } from './hooks/useUsers';
 import { useInfiniteScroll } from './hooks/useInfiniteScroll';
+import { AnimatePresence, motion, type Transition } from 'motion/react';
+
+const pageVariants = {
+  initial: { opacity: 0, scale: 0.96, filter: 'blur(6px)' },
+  in: { opacity: 1, scale: 1, filter: 'blur(0px)' },
+  out: { opacity: 0, scale: 1.04, filter: 'blur(6px)' },
+};
+
+const pageTransition: Transition = {
+  type: 'tween',
+  ease: 'anticipate',
+  duration: 0.45,
+};
 
 export default function App() {
   const { theme, toggleTheme } = useTheme();
@@ -85,68 +98,86 @@ export default function App() {
     if (ok) setIsUploadOpen(false);
   };
 
-  if (!token) {
-    return (
-      <>
-        <LoginPage
-          onSubmit={handleLogin}
-          isLoading={isLoading}
-          loginError={loginError}
-          theme={theme}
-          toggleTheme={toggleTheme}
-        />
-        <ToastContainer toasts={toasts} onDismiss={toastDismiss} />
-      </>
-    );
-  }
-
   return (
-    <div className="flex h-screen flex-col overflow-hidden font-sans text-gray-900 dark:text-gray-100">
-      <AppNav
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        onLogout={handleLogout}
-      />
+    <>
+      <AnimatePresence mode="wait">
+        {!token ? (
+          <motion.div
+            key="login"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+            className="absolute inset-0 min-h-screen w-full"
+          >
+            <LoginPage
+              onSubmit={handleLogin}
+              isLoading={isLoading}
+              loginError={loginError}
+              theme={theme}
+              toggleTheme={toggleTheme}
+            />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="app"
+            initial="initial"
+            animate="in"
+            exit="out"
+            variants={pageVariants}
+            transition={pageTransition}
+            className="absolute inset-0 flex h-screen w-full flex-col overflow-hidden font-sans text-gray-900 dark:text-gray-100"
+          >
+            <AppNav
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              theme={theme}
+              toggleTheme={toggleTheme}
+              onLogout={handleLogout}
+            />
 
-      <div className="flex-1 overflow-x-clip overflow-y-auto">
-        <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
-          <UserGrid
-            allUsers={users}
-            visibleUsers={visibleUsers}
-            filteredCount={filteredUsers.length}
-            isAdmin={isAdmin}
-            hasMore={hasMore}
-            isSearching={isSearching}
-            observerTarget={observerTarget}
-            onEditPhoto={openUpload}
-            onDeletePhoto={openDelete}
-          />
-        </main>
-      </div>
+            <div className="flex-1 overflow-x-clip overflow-y-auto">
+              <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
+                <UserGrid
+                  allUsers={users}
+                  visibleUsers={visibleUsers}
+                  filteredCount={filteredUsers.length}
+                  isAdmin={isAdmin}
+                  hasMore={hasMore}
+                  isSearching={isSearching}
+                  observerTarget={observerTarget}
+                  onEditPhoto={openUpload}
+                  onDeletePhoto={openDelete}
+                />
+              </main>
+            </div>
 
-      <AppFooter />
+            <AppFooter />
 
-      <ConfirmDeleteModal
-        isOpen={isDeleteOpen}
-        onClose={() => {
-          setIsDeleteOpen(false);
-          setUserToDelete(null);
-        }}
-        onConfirm={confirmDelete}
-        user={userToDelete}
-        isLoading={isDeleting}
-      />
+            <ConfirmDeleteModal
+              isOpen={isDeleteOpen}
+              onClose={() => {
+                setIsDeleteOpen(false);
+                setUserToDelete(null);
+              }}
+              onConfirm={confirmDelete}
+              user={userToDelete}
+              isLoading={isDeleting}
+            />
 
-      <PhotoUploadModal
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        user={selectedUser}
-        onSave={savePhoto}
-      />
+            <PhotoUploadModal
+              isOpen={isUploadOpen}
+              onClose={() => setIsUploadOpen(false)}
+              user={selectedUser}
+              onSave={savePhoto}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
+      {/* ToastContainer hors AnimatePresence pour ne pas être affecté par les transitions */}
       <ToastContainer toasts={toasts} onDismiss={toastDismiss} />
-    </div>
+    </>
   );
 }
