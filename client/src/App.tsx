@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { type User } from './components/UserCard';
 import LoginPage from './components/LoginPage';
 import AppNav from './components/AppNav';
@@ -24,12 +24,23 @@ export default function App() {
     onError: toastError,
   });
 
-  // Recherche
+  // Recherche avec debounce pour le skeleton
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const isSearching = searchTerm !== debouncedSearch;
+
   const filteredUsers = users.filter((user) =>
     `${user.firstName} ${user.lastName} ${user.department}`
       .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+      .includes(debouncedSearch.toLowerCase())
   );
 
   // Infinite scroll
@@ -107,6 +118,7 @@ export default function App() {
             filteredCount={filteredUsers.length}
             isAdmin={isAdmin}
             hasMore={hasMore}
+            isSearching={isSearching}
             observerTarget={observerTarget}
             onEditPhoto={openUpload}
             onDeletePhoto={openDelete}
