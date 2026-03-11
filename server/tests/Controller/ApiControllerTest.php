@@ -407,4 +407,32 @@ class ApiControllerTest extends WebTestCase
 
         unlink($tempFile);
     }
+
+    public function testUploadPhotoReturns500OnException(): void
+    {
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $this->client->loginUser($user, 'api');
+
+        // On envoie un fichier texte pour forcer une erreur dans le UploadService
+        $tempFile = sys_get_temp_dir() . '/invalid.txt';
+        file_put_contents($tempFile, 'Ceci n\'est pas une image');
+
+        $uploadedFile = new UploadedFile(
+            $tempFile,
+            'invalid.txt',
+            'text/plain',
+            null,
+            true
+        );
+
+        $this->client->request('POST', '/api/users/dupont.j/photo', [], ['photo' => $uploadedFile]);
+
+        $this->assertResponseStatusCodeSame(500);
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertArrayHasKey('error', $data);
+        $this->assertStringContainsString('Format d\'image non supporté', $data['error']);
+
+        unlink($tempFile);
+    }
 }
