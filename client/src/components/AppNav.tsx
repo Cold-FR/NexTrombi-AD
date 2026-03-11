@@ -1,6 +1,7 @@
-import { Search, Users, LogOut, Sun, Moon, X } from 'lucide-react';
+import { Search, Users, LogOut, X } from 'lucide-react';
 import { motion } from 'motion/react';
-import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
+import { btnHover, btnTap } from '../lib/motionVariants';
+import ThemeToggleButton from './ThemeToggleButton';
 
 interface SearchInputProps {
   value: string;
@@ -72,22 +73,7 @@ export default function AppNav({
           />
 
           {/* Bouton thème */}
-          <motion.button
-            onClick={toggleTheme}
-            whileHover={iconBtnHover}
-            whileTap={iconBtnTap}
-            className="group flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-            title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
-            aria-label="Changer de thème"
-          >
-            {theme === 'dark' ? (
-              // Mode sombre → icône Soleil, devient jaune au survol
-              <Sun size={18} className="transition-colors group-hover:text-yellow-400" />
-            ) : (
-              // Mode clair → icône Lune, devient violette au survol
-              <Moon size={18} className="transition-colors group-hover:text-violet-500" />
-            )}
-          </motion.button>
+          <ThemeToggleButton theme={theme} toggleTheme={toggleTheme} />
 
           {/* Bouton déconnexion */}
           <motion.button

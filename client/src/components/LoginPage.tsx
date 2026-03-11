@@ -1,7 +1,8 @@
-import { Loader2, Sun, Moon, Users, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Users } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
+import { btnHover, btnTap, iconBtnTap } from '../lib/motionVariants';
+import ThemeToggleButton from './ThemeToggleButton';
 
 interface LoginPageProps {
   onSubmit: (e: React.SubmitEvent<HTMLFormElement>) => Promise<void>;
@@ -23,20 +24,11 @@ export default function LoginPage({
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 font-sans sm:px-6 lg:px-8 dark:bg-gray-900">
       {/* Bouton thème coin haut droit */}
-      <motion.button
-        onClick={toggleTheme}
-        whileHover={iconBtnHover}
-        whileTap={iconBtnTap}
-        className="group fixed top-4 right-4 flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition-colors hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-        title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
-        aria-label="Changer de thème"
-      >
-        {theme === 'dark' ? (
-          <Sun size={18} className="transition-colors group-hover:text-yellow-400" />
-        ) : (
-          <Moon size={18} className="transition-colors group-hover:text-violet-500" />
-        )}
-      </motion.button>
+      <ThemeToggleButton
+        theme={theme}
+        toggleTheme={toggleTheme}
+        className="fixed top-4 right-4 shadow-sm"
+      />
 
       <div className="w-full max-w-md space-y-8 rounded-xl border border-gray-100 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800">
         <div className="text-center">
