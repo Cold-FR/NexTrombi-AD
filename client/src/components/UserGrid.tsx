@@ -1,5 +1,6 @@
 import { Loader2 } from 'lucide-react';
 import UserCard, { type User } from './UserCard';
+import { motion } from 'motion/react';
 
 interface UserGridProps {
   allUsers: User[];
@@ -22,6 +23,14 @@ export default function UserGrid({
   onEditPhoto,
   onDeletePhoto,
 }: UserGridProps) {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }, // Chaque carte apparaît avec 0.1s de décalage
+    },
+  };
+
   // Chargement initial
   if (allUsers.length === 0) {
     return (
@@ -43,7 +52,12 @@ export default function UserGrid({
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+      >
         {visibleUsers.map((user) => (
           <UserCard
             key={user.id}
@@ -53,7 +67,7 @@ export default function UserGrid({
             onDeletePhoto={onDeletePhoto}
           />
         ))}
-      </div>
+      </motion.div>
 
       {hasMore && (
         <div ref={observerTarget} className="mt-4 flex w-full justify-center py-10">
