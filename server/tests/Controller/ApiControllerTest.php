@@ -151,7 +151,7 @@ class ApiControllerTest extends WebTestCase
         $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
 
         $tempFile = $this->createTempJpeg('test_photo_api.jpg');
-        $this->client->request('POST', '/api/users/1/photo', [], [
+        $this->client->request('POST', '/api/users/admin_user/photo', [], [
             'photo' => new UploadedFile($tempFile, 'photo.jpg', 'image/jpeg', null, true),
         ]);
 
@@ -251,6 +251,184 @@ class ApiControllerTest extends WebTestCase
             'Utilisateur introuvable dans l\'AD.',
             json_decode($client->getResponse()->getContent(), true)['error']
         );
+
+        unlink($tempFile);
+        $this->resetAdMode();
+    }
+
+    public function testDeletePhotoSuccessInLocalModeWithExistingPhoto(): void
+    {
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $this->client->loginUser($user, 'api');
+
+        // On injecte manuellement une photo dans la BDD
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+        $userPhoto = new UserPhoto();
+        $userPhoto->setLdapUsername('dupont.j');
+        $userPhoto->setPhotoFilename('photo_a_supprimer.webp');
+        $em->persist($userPhoto);
+        $em->flush();
+
+        // On crée un faux fichier physique sur le disque
+        $projectDir = $this->client->getContainer()->getParameter('kernel.project_dir');
+        $uploadsDir = $projectDir.'/public/uploads/photos';
+        @mkdir($uploadsDir, 0777, true);
+        $filePath = $uploadsDir.'/photo_a_supprimer.webp';
+        file_put_contents($filePath, 'fake image data');
+
+        // On lance la requête de suppression
+        $this->client->request('DELETE', '/api/users/dupont.j/photo');
+
+        // On vérifie le succès
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Photo supprimée avec succès', $data['message']);
+
+        // On vérifie que le fichier a bien été supprimé du disque
+        $this->assertFileDoesNotExist($filePath);
+
+        // On vérifie que l'entité a bien été supprimée de la BDD
+        $deletedPhoto = $em->getRepository(UserPhoto::class)->findOneBy(['ldapUsername' => 'dupont.j']);
+        $this->assertNull($deletedPhoto);
+    }
+
+    public function testDeletePhotoSuccessInLocalModeWithoutExistingPhoto(): void
+    {
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $this->client->loginUser($user, 'api');
+
+        // On supprime la photo d'un utilisateur qui n'en a pas
+        $this->client->request('DELETE', '/api/users/inconnu/photo');
+
+        // La route doit retourner un succès quand même (idempotence)
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Photo supprimée avec succès', $data['message']);
+    }
+
+    public function testDeletePhotoSuccessInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+
+        $this->setupLdapFake()->expect([
+            // L'utilisateur existe
+            LdapFake::operation('search')->andReturn([
+                [
+                    'dn' => 'cn=Jean Dupont,ou=utilisateurs,dc=mairie,dc=local',
+                    'samaccountname' => ['dupont.j'],
+                    'thumbnailphoto' => ['binaire_a_supprimer'],
+                ],
+            ]),
+            // L'API va écraser sa photo (thumbnailphoto = null)
+            LdapFake::operation('modifyBatch')->andReturn(true),
+        ]);
+
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $client->loginUser($user, 'api');
+
+        $client->request('DELETE', '/api/users/dupont.j/photo');
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('Photo supprimée avec succès', $data['message']);
+
+        $this->resetAdMode();
+    }
+
+    public function testDeletePhotoReturns404IfUserNotFoundInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+
+        $this->setupLdapFake()->expect([
+            LdapFake::operation('search')->andReturn([]), // Aucun résultat
+        ]);
+
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $client->loginUser($user, 'api');
+
+        $client->request('DELETE', '/api/users/inconnu/photo');
+
+        $this->assertResponseStatusCodeSame(404);
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('Utilisateur introuvable dans l\'AD.', $data['error']);
+
+        $this->resetAdMode();
+    }
+
+    public function testDeletePhotoReturns500OnException(): void
+    {
+        $client = $this->switchToAdMode();
+
+        $this->setupLdapFake()->expect([
+            LdapFake::operation('search')->andThrow(new \Exception('Erreur interne LDAP')),
+        ]);
+
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $client->loginUser($user, 'api');
+
+        $client->request('DELETE', '/api/users/dupont.j/photo');
+
+        $this->assertResponseStatusCodeSame(500);
+        $data = json_decode($client->getResponse()->getContent(), true);
+        $this->assertSame('Erreur interne LDAP', $data['error']);
+
+        $this->resetAdMode();
+    }
+
+    public function testUploadPhotoReplacesOldLocalPhotoFile(): void
+    {
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $this->client->loginUser($user, 'api');
+
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+        $userPhoto = new UserPhoto();
+        $userPhoto->setLdapUsername('dupont.j');
+        $userPhoto->setPhotoFilename('old_photo.webp');
+        $em->persist($userPhoto);
+        $em->flush();
+
+        $projectDir = $this->client->getContainer()->getParameter('kernel.project_dir');
+        $uploadsDir = $projectDir.'/public/uploads/photos';
+        @mkdir($uploadsDir, 0777, true);
+        $oldFilePath = $uploadsDir.'/old_photo.webp';
+        file_put_contents($oldFilePath, 'old content');
+
+        $tempFile = sys_get_temp_dir().'/new_photo.jpg';
+        imagejpeg(imagecreatetruecolor(10, 10), $tempFile);
+        $uploadedFile = new UploadedFile($tempFile, 'photo.jpg', 'image/jpeg', null, true);
+
+        $this->client->request('POST', '/api/users/dupont.j/photo', [], ['photo' => $uploadedFile]);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertFileDoesNotExist($oldFilePath);
+
+        unlink($tempFile);
+    }
+
+    public function testUploadPhotoReturns500OnException(): void
+    {
+        $user = new User('admin_user', ['ROLE_ADMIN']);
+        $this->client->loginUser($user, 'api');
+
+        // On envoie un fichier texte pour forcer une erreur dans le UploadService
+        $tempFile = sys_get_temp_dir().'/invalid.txt';
+        file_put_contents($tempFile, 'Ceci n\'est pas une image');
+
+        $uploadedFile = new UploadedFile(
+            $tempFile,
+            'invalid.txt',
+            'text/plain',
+            null,
+            true
+        );
+
+        $this->client->request('POST', '/api/users/dupont.j/photo', [], ['photo' => $uploadedFile]);
+
+        $this->assertResponseStatusCodeSame(500);
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertArrayHasKey('error', $data);
+        $this->assertStringContainsString('Format d\'image non supporté', $data['error']);
 
         unlink($tempFile);
     }
