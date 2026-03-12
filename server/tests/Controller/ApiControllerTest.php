@@ -10,21 +10,29 @@ use LdapRecord\Testing\DirectoryFake;
 use LdapRecord\Testing\LdapFake;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class ApiControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
+    private string $uploadFolder;
 
     protected function setUp(): void
     {
         static::ensureKernelShutdown();
         $this->client = static::createClient();
         $this->client->getContainer()->get(LdapConnection::class);
+        $this->uploadFolder = $this->client->getContainer()->getParameter('upload_folder');
     }
 
     protected function tearDown(): void
     {
+        // Supprime tous les fichiers déposés dans le dossier d'upload de test
+        foreach (glob($this->uploadFolder.'/*') ?: [] as $file) {
+            new Filesystem()->remove($file);
+        }
+
         try {
             DirectoryFake::tearDown();
         } catch (\Throwable) {
@@ -270,9 +278,7 @@ class ApiControllerTest extends WebTestCase
         $em->flush();
 
         // On crée un faux fichier physique sur le disque
-        $uploadsDir = $this->client->getContainer()->getParameter('upload_folder');
-        @mkdir($uploadsDir, 0777, true);
-        $filePath = $uploadsDir.'/photo_a_supprimer.webp';
+        $filePath = $this->uploadFolder.'/photo_a_supprimer.webp';
         file_put_contents($filePath, 'fake image data');
 
         // On lance la requête de suppression
@@ -386,9 +392,7 @@ class ApiControllerTest extends WebTestCase
         $em->persist($userPhoto);
         $em->flush();
 
-        $uploadsDir = $this->client->getContainer()->getParameter('upload_folder');
-        @mkdir($uploadsDir, 0777, true);
-        $oldFilePath = $uploadsDir.'/old_photo.webp';
+        $oldFilePath = $this->uploadFolder.'/old_photo.webp';
         file_put_contents($oldFilePath, 'old content');
 
         $tempFile = sys_get_temp_dir().'/new_photo.jpg';
@@ -453,18 +457,13 @@ class ApiControllerTest extends WebTestCase
         $user = new User('admin_user', ['ROLE_USER']);
         $this->client->loginUser($user, 'api');
 
-        $uploadFolder = $this->client->getContainer()->getParameter('upload_folder');
-        @mkdir($uploadFolder, 0777, true);
-
-        $filePath = $uploadFolder.'/photo_mime_test.webp';
+        $filePath = $this->uploadFolder.'/photo_mime_test.webp';
         imagewebp(imagecreatetruecolor(10, 10), $filePath);
 
         $this->client->request('GET', '/api/photos/photo_mime_test.webp');
 
         $this->assertResponseIsSuccessful();
         $this->assertStringStartsWith('image/webp', $this->client->getResponse()->headers->get('Content-Type'));
-
-        @unlink($filePath);
     }
 
     /**
