@@ -54,7 +54,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
 
   const handleSavePhoto = useCallback(
     async (userId: string, file: File) => {
-      if (!token) return;
+      if (!token) return false;
 
       const formData = new FormData();
       formData.append('photo', file);

@@ -36,6 +36,8 @@ export default function PhotoUploadModal({ isOpen, onClose, user, onSave }: Phot
   const handleSave = () => {
     if (user && selectedFile) {
       onSave(user.id, selectedFile);
+      setSelectedFile(null);
+      setLocalPreviewUrl(null);
       onClose();
     }
   };
