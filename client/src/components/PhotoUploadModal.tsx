@@ -72,7 +72,7 @@ export default function PhotoUploadModal({ isOpen, onClose, user, onSave }: Phot
           >
             <div className="flex items-center justify-between rounded-t-xl border-b border-gray-200 bg-gray-50/50 px-5 py-4 dark:border-gray-700 dark:bg-gray-800/50">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Photo de profil
+                Photo de {user.firstName} {user.lastName}
               </h3>
               <motion.button
                 onClick={handleClose}
