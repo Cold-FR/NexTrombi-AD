@@ -17,6 +17,7 @@ export type User = {
 interface UserCardProps {
   user: User;
   isAdmin: boolean;
+  isOwnProfile: boolean;
   onEditPhoto?: (userId: string) => void;
   onDeletePhoto?: (userId: string) => void;
 }
@@ -31,6 +32,7 @@ const itemTransition = { type: 'spring' as const, stiffness: 300, damping: 22 };
 export default memo(function UserCard({
   user,
   isAdmin,
+  isOwnProfile,
   onEditPhoto,
   onDeletePhoto,
 }: UserCardProps) {
@@ -60,7 +62,7 @@ export default memo(function UserCard({
           )}
 
           {/* BOUTON D'ÉDITION (Admin seulement) */}
-          {isAdmin && onEditPhoto && (
+          {(isAdmin || isOwnProfile) && onEditPhoto && (
             <motion.button
               onClick={() => onEditPhoto(user.id)}
               whileHover={iconBtnHover}
@@ -73,7 +75,7 @@ export default memo(function UserCard({
           )}
 
           {/* BOUTON DE SUPPRESSION (Admin seulement, uniquement si une photo existe) */}
-          {isAdmin && onDeletePhoto && user.photoUrl && (
+          {(isAdmin || isOwnProfile) && onDeletePhoto && user.photoUrl && (
             <motion.button
               onClick={() => onDeletePhoto(user.id)}
               whileHover={iconBtnHover}

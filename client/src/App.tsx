@@ -29,7 +29,7 @@ const pageTransition: Transition = {
 export default function App() {
   const { theme, toggleTheme } = useTheme();
   const { toasts, success: toastSuccess, error: toastError, dismiss: toastDismiss } = useToast();
-  const { token, isAdmin, isLoading, loginError, handleLogin, handleLogout } = useAuth();
+  const { token, isAdmin, username, isLoading, loginError, handleLogin, handleLogout } = useAuth();
   const { users, handleSavePhoto, handleDeletePhoto } = useUsers({
     token,
     onLogout: handleLogout,
@@ -150,6 +150,7 @@ export default function App() {
                   visibleUsers={visibleUsers}
                   filteredCount={filteredUsers.length}
                   isAdmin={isAdmin}
+                  loggedUsername={username}
                   hasMore={hasMore}
                   isSearching={isSearching}
                   observerTarget={observerTarget}

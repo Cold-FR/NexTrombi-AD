@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\UserPhoto;
 use App\Repository\UserPhotoRepository;
+use App\Security\Voter\UserPhotoVoter;
 use App\Service\LdapConnection;
 use App\Service\UploadService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -96,7 +97,7 @@ class ApiController extends AbstractController
         }
     }
 
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted(UserPhotoVoter::UPLOAD, 'ldapUsername')]
     #[Route('/api/users/{ldapUsername}/photo', name: 'api_photo_upload', requirements: ['ldapUsername' => '.+'], methods: ['POST'])]
     public function uploadPhoto(
         string $ldapUsername,
@@ -167,7 +168,7 @@ class ApiController extends AbstractController
         }
     }
 
-    #[IsGranted('ROLE_ADMIN')]
+    #[IsGranted(UserPhotoVoter::DELETE, 'ldapUsername')]
     #[Route('/api/users/{ldapUsername}/photo', name: 'api_photo_delete', methods: ['DELETE'])]
     public function deletePhoto(
         string $ldapUsername,

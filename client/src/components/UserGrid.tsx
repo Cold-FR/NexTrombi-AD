@@ -44,6 +44,7 @@ interface UserGridProps {
   visibleUsers: User[];
   filteredCount: number;
   isAdmin: boolean;
+  loggedUsername: string | null;
   hasMore: boolean;
   isSearching: boolean;
   observerTarget: React.RefObject<HTMLDivElement | null>;
@@ -61,6 +62,7 @@ export default memo(function UserGrid({
   visibleUsers,
   filteredCount,
   isAdmin,
+  loggedUsername,
   hasMore,
   isSearching,
   observerTarget,
@@ -124,6 +126,7 @@ export default memo(function UserGrid({
               <UserCard
                 key={user.id}
                 user={user}
+                isOwnProfile={loggedUsername === user.id}
                 isAdmin={isAdmin}
                 onEditPhoto={onEditPhoto}
                 onDeletePhoto={onDeletePhoto}

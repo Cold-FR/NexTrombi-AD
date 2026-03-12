@@ -4,6 +4,7 @@ export interface AuthState {
   token: string | null;
   roles: string[];
   isAdmin: boolean;
+  username: string | null;
   isLoading: boolean;
   loginError: string;
   handleLogin: (e: React.SubmitEvent<HTMLFormElement>) => Promise<void>;
@@ -13,14 +14,17 @@ export interface AuthState {
 export function useAuth(): AuthState {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [roles, setRoles] = useState<string[]>(JSON.parse(localStorage.getItem('roles') || '[]'));
+  const [username, setUsername] = useState<string | null>(localStorage.getItem('username'));
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('roles');
+    localStorage.removeItem('username');
     setToken(null);
     setRoles([]);
+    setUsername(null);
   }, []);
 
   const handleLogin = useCallback(async (e: React.SubmitEvent<HTMLFormElement>) => {
@@ -47,8 +51,10 @@ export function useAuth(): AuthState {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('roles', JSON.stringify(data.roles));
+        localStorage.setItem('username', data.user);
         setToken(data.token);
         setRoles(data.roles);
+        setUsername(data.user);
       } else {
         setLoginError(data.error || 'Identifiants incorrects');
       }
@@ -63,6 +69,7 @@ export function useAuth(): AuthState {
     token,
     roles,
     isAdmin: roles.includes('ROLE_ADMIN'),
+    username,
     isLoading,
     loginError,
     handleLogin,

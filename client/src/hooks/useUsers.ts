@@ -19,11 +19,16 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       return;
     }
 
+    const controller = new AbortController();
+
     const fetchUsers = async () => {
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }
         );
 
         if (response.status === 401) {
@@ -34,17 +39,22 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
 
         const data = await response.json();
         setUsers(data);
-      } catch {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') return;
         onError("Impossible de charger l'annuaire.");
       }
     };
 
     fetchUsers();
+
+    return () => {
+      controller.abort();
+    };
   }, [token, onLogout, onError]);
 
   const handleSavePhoto = useCallback(
     async (userId: string, file: File) => {
-      if (!token) return;
+      if (!token) return false;
 
       const formData = new FormData();
       formData.append('photo', file);
@@ -66,6 +76,10 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           );
           onSuccess('Photo mise à jour avec succès.');
           return true;
+        } else if (response.status === 401) {
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
+          return false;
         } else {
           const errorData = await response.json().catch(() => ({}));
           onError(errorData.error ?? "Impossible d'enregistrer la photo.");
@@ -76,7 +90,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, onSuccess, onError]
+    [token, onSuccess, onError, onLogout]
   );
 
   const handleDeletePhoto = useCallback(
@@ -96,6 +110,10 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, photoUrl: null } : u)));
           onSuccess('Photo supprimée avec succès.');
           return true;
+        } else if (response.status === 401) {
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
+          return false;
         } else {
           const errorData = await response.json().catch(() => ({}));
           onError(errorData.error ?? 'Impossible de supprimer la photo.');
@@ -106,7 +124,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, onSuccess, onError]
+    [token, onSuccess, onError, onLogout]
   );
 
   return { users, handleSavePhoto, handleDeletePhoto };
