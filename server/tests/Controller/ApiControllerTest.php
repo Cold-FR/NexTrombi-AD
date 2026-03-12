@@ -431,6 +431,14 @@ class ApiControllerTest extends WebTestCase
         unlink($tempFile);
     }
 
+    public function testCantGetPhotoWhenLoggedIn(): void
+    {
+        $this->client->request('GET', '/api/photos/test_image.jpg');
+
+        $this->assertResponseStatusCodeSame(401);
+        $this->assertSame('{"code":401,"message":"JWT Token not found"}', $this->client->getResponse()->getContent());
+    }
+
     public function testGetPhotoReturnsABinary(): void
     {
         $user = new User('admin_user', ['ROLE_USER']);
