@@ -6,5 +6,6 @@ grumphp:
             allow_risky: true
         phpstan:
             configuration: 'phpstan.dist.neon'
+            memory_limit: "512M"
         twigcs: ~
         yamllint: ~
