@@ -76,6 +76,10 @@ class UploadService
             throw new \RuntimeException('Impossible de lire l\'image.');
         }
 
+        if (in_array($mimeType, ['image/jpeg', 'image/jpg'], true)) {
+            $image = $this->fixImageOrientation($image, $sourcePath);
+        }
+
         return $image;
     }
 
@@ -106,5 +110,30 @@ class UploadService
         imagecopyresampled($newImage, $sourceImage, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
 
         return $newImage;
+    }
+
+    private function fixImageOrientation(\GdImage $image, string $filename): \GdImage
+    {
+        // On essaie de lire les données EXIF (seulement possible sur les JPEG/TIFF)
+        $exif = @exif_read_data($filename);
+
+        if ($exif && isset($exif['Orientation'])) {
+            switch ($exif['Orientation']) {
+                case 3:
+                    // Tournée à 180°
+                    $image = imagerotate($image, 180, 0);
+                    break;
+                case 6:
+                    // Tournée à 90° vers la droite
+                    $image = imagerotate($image, -90, 0);
+                    break;
+                case 8:
+                    // Tournée à 90° vers la gauche
+                    $image = imagerotate($image, 90, 0);
+                    break;
+            }
+        }
+
+        return $image;
     }
 }
