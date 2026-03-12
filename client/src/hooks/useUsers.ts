@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { type User } from '../components/UserCard';
+import { clearImageCache } from '../lib/imageCache';
+
+const USERS_CACHE_KEY = 'trombinoscope_users_cache';
 
 interface UseUsersOptions {
   token: string | null;
@@ -9,13 +12,21 @@ interface UseUsersOptions {
 }
 
 export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOptions) {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[]>(() => {
+    try {
+      const cached = sessionStorage.getItem(USERS_CACHE_KEY);
+      return cached ? (JSON.parse(cached) as User[]) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Chargement initial
   useEffect(() => {
     if (!token) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setUsers([]);
+      sessionStorage.removeItem(USERS_CACHE_KEY);
       return;
     }
 
@@ -37,8 +48,9 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           return;
         }
 
-        const data = await response.json();
+        const data: User[] = await response.json();
         setUsers(data);
+        sessionStorage.setItem(USERS_CACHE_KEY, JSON.stringify(data));
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
         onError("Impossible de charger l'annuaire.");
@@ -71,9 +83,17 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
 
         if (response.ok) {
           const data = await response.json();
-          setUsers((prev) =>
-            prev.map((u) => (u.id === userId ? { ...u, photoUrl: data.photoUrl } : u))
-          );
+          // Invalider le cache de l'ancienne image
+          const oldUser = users.find((u) => u.id === userId);
+          if (oldUser?.photoUrl) clearImageCache(oldUser.photoUrl);
+
+          setUsers((prev) => {
+            const updated = prev.map((u) =>
+              u.id === userId ? { ...u, photoUrl: data.photoUrl } : u
+            );
+            sessionStorage.setItem(USERS_CACHE_KEY, JSON.stringify(updated));
+            return updated;
+          });
           onSuccess('Photo mise à jour avec succès.');
           return true;
         } else if (response.status === 401) {
@@ -90,7 +110,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, onSuccess, onError, onLogout]
+    [token, users, onSuccess, onError, onLogout]
   );
 
   const handleDeletePhoto = useCallback(
@@ -107,7 +127,15 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         );
 
         if (response.ok) {
-          setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, photoUrl: null } : u)));
+          // Invalider le cache de l'image supprimée
+          const oldUser = users.find((u) => u.id === userId);
+          if (oldUser?.photoUrl) clearImageCache(oldUser.photoUrl);
+
+          setUsers((prev) => {
+            const updated = prev.map((u) => (u.id === userId ? { ...u, photoUrl: null } : u));
+            sessionStorage.setItem(USERS_CACHE_KEY, JSON.stringify(updated));
+            return updated;
+          });
           onSuccess('Photo supprimée avec succès.');
           return true;
         } else if (response.status === 401) {
@@ -124,7 +152,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, onSuccess, onError, onLogout]
+    [token, users, onSuccess, onError, onLogout]
   );
 
   return { users, handleSavePhoto, handleDeletePhoto };
