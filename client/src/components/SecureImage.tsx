@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { imageCache } from '../lib/imageCache';
 
 interface SecureImageProps {
   src: string;
@@ -8,13 +9,15 @@ interface SecureImageProps {
 }
 
 export function SecureImage({ src, alt, className }: SecureImageProps) {
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const [imageSrc, setImageSrc] = useState<string | null>(() => imageCache.get(src) ?? null);
   const { token } = useAuth();
 
   useEffect(() => {
     if (!src) return;
 
-    let objectUrl: string | null = null;
+    // Déjà en cache → pas besoin de fetcher
+    if (imageCache.has(src)) return;
+
     let isMounted = true;
 
     const fetchImage = async () => {
@@ -30,12 +33,11 @@ export function SecureImage({ src, alt, className }: SecureImageProps) {
           return;
         }
 
-        // On transforme l'image reçue en un Blob (donnée brute)
         const blob = await response.blob();
 
         if (isMounted) {
-          // On crée une URL temporaire locale
-          objectUrl = URL.createObjectURL(blob);
+          const objectUrl = URL.createObjectURL(blob);
+          imageCache.set(src, objectUrl);
           setImageSrc(objectUrl);
         }
       } catch (error) {
@@ -47,9 +49,7 @@ export function SecureImage({ src, alt, className }: SecureImageProps) {
 
     return () => {
       isMounted = false;
-      if (objectUrl) {
-        URL.revokeObjectURL(objectUrl);
-      }
+      // On ne révoque PAS l'objectUrl ici : il reste dans le cache
     };
   }, [src, token]);
 
