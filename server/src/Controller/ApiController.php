@@ -12,6 +12,7 @@ use LdapRecord\Models\ActiveDirectory\User;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -216,5 +217,18 @@ class ApiController extends AbstractController
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    #[Route('/api/photos/{filename}', name: 'api_get_photo', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function getPhoto(string $filename): BinaryFileResponse
+    {
+        $path = $this->uploadFolder.$filename;
+
+        if (!file_exists($path)) {
+            throw $this->createNotFoundException('Photo introuvable');
+        }
+
+        return new BinaryFileResponse($path);
     }
 }
