@@ -19,11 +19,16 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       return;
     }
 
+    const controller = new AbortController();
+
     const fetchUsers = async () => {
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: controller.signal,
+          }
         );
 
         if (response.status === 401) {
@@ -34,12 +39,17 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
 
         const data = await response.json();
         setUsers(data);
-      } catch {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') return;
         onError("Impossible de charger l'annuaire.");
       }
     };
 
     fetchUsers();
+
+    return () => {
+      controller.abort();
+    };
   }, [token, onLogout, onError]);
 
   const handleSavePhoto = useCallback(
