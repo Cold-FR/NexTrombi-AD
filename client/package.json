@@ -1,7 +1,20 @@
 {
-  "name": "client",
+  "name": "nextrombi-ad-client",
+  "description": "Frontend React du trombinoscope connecté à Active Directory — authentification LDAP, gestion des photos, interface moderne.",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Cold-FR/NexTrombi-AD"
+  },
+  "keywords": [
+    "trombinoscope",
+    "active-directory",
+    "ldap",
+    "react",
+    "tailwindcss"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
