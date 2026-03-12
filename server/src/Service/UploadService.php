@@ -13,7 +13,7 @@ class UploadService
     private const array ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
     public function __construct(
-        #[Autowire('%env(UPLOAD_FOLDER)%')] private readonly string $uploadFolder,
+        #[Autowire('%upload_folder%')] private readonly string $uploadFolder,
     ) {
     }
 

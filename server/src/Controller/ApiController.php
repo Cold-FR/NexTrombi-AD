@@ -24,7 +24,7 @@ class ApiController extends AbstractController
     public function __construct(
         #[Autowire('%env(APP_LDAP_USERS_OU)%')] private readonly string $usersOu,
         #[Autowire('%env(APP_PHOTO_STORAGE_MODE)%')] private readonly string $photoStorageMode,
-        #[Autowire('%env(UPLOAD_FOLDER)%')] private readonly string $uploadFolder,
+        #[Autowire('%upload_folder%')] private readonly string $uploadFolder,
     ) {
     }
 
@@ -148,7 +148,7 @@ class ApiController extends AbstractController
                     $userPhoto->setLdapUsername($ldapUsername);
                 } else {
                     // Supprimer l'ancienne image physique si elle existe
-                    $oldPath = $this->uploadFolder.$userPhoto->getPhotoFilename();
+                    $oldPath = $this->uploadFolder.'/'.$userPhoto->getPhotoFilename();
                     $fileSys = new Filesystem();
                     if ($fileSys->exists($oldPath)) {
                         $fileSys->remove($oldPath);
@@ -200,7 +200,7 @@ class ApiController extends AbstractController
 
                 if ($userPhoto) {
                     // Supprimer l'ancienne image physique si elle existe
-                    $oldPath = $this->uploadFolder.$userPhoto->getPhotoFilename();
+                    $oldPath = $this->uploadFolder.'/'.$userPhoto->getPhotoFilename();
                     $fileSys = new Filesystem();
                     if ($fileSys->exists($oldPath)) {
                         $fileSys->remove($oldPath);
@@ -223,7 +223,7 @@ class ApiController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function getPhoto(string $filename): BinaryFileResponse
     {
-        $path = $this->uploadFolder.$filename;
+        $path = $this->uploadFolder.'/'.$filename;
 
         if (!file_exists($path)) {
             throw $this->createNotFoundException('Photo introuvable');
