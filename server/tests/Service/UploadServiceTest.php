@@ -15,12 +15,12 @@ class UploadServiceTest extends TestCase
     protected function setUp(): void
     {
         // Création d'un dossier temporaire unique pour isoler les tests
-        $this->tempDir = sys_get_temp_dir().'/trombi_tests_'.uniqid();
+        $this->tempDir = sys_get_temp_dir().'/trombi_tests_'.uniqid().'/uploads/photos';
         new Filesystem()->mkdir($this->tempDir);
 
         // Initialisation du service
         $this->uploadService = new UploadService(
-            $this->tempDir, // Remplace %kernel.project_dir%
+            $this->tempDir, // Remplace le chemin du dossier d'upload
         );
     }
 
@@ -81,7 +81,7 @@ class UploadServiceTest extends TestCase
 
         $this->assertStringEndsWith('.webp', $filename);
 
-        $savedPath = $this->tempDir.'/public/uploads/photos/'.$filename;
+        $savedPath = $this->tempDir.'/'.$filename;
         $this->assertFileExists($savedPath);
 
         $dimensions = getimagesize($savedPath);
@@ -96,7 +96,7 @@ class UploadServiceTest extends TestCase
 
         $filename = $this->uploadService->handleLocalUpload($file);
 
-        $savedPath = $this->tempDir.'/public/uploads/photos/'.$filename;
+        $savedPath = $this->tempDir.'/'.$filename;
         $this->assertFileExists($savedPath);
 
         $dimensions = getimagesize($savedPath);

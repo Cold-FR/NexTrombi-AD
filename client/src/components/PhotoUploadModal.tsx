@@ -10,6 +10,7 @@ import {
   overlayVariants,
   modalVariants,
 } from '../lib/motionVariants';
+import { SecureImage } from './SecureImage';
 
 interface PhotoUploadModalProps {
   isOpen: boolean;
@@ -87,7 +88,7 @@ export default function PhotoUploadModal({ isOpen, onClose, user, onSave }: Phot
               <div className="mb-6 flex flex-col items-center">
                 <div className="relative mb-6">
                   {previewUrl ? (
-                    <img
+                    <SecureImage
                       src={previewUrl}
                       alt="Aperçu"
                       className="h-28 w-28 rounded-full border-4 border-gray-50 object-cover shadow-sm dark:border-gray-700"

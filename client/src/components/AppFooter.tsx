@@ -14,7 +14,7 @@ export default function AppFooter() {
               {import.meta.env.VITE_APP_COMPANY_NAME || 'Mon organisation'}
             </span>
             {' — '}
-            {import.meta.env.VITE_APP_TITLE || 'Annuaire des agents'}
+            Trombinoscope
           </span>
 
           <button
