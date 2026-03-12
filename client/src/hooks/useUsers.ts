@@ -76,6 +76,10 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           );
           onSuccess('Photo mise à jour avec succès.');
           return true;
+        } else if (response.status === 401) {
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
+          return false;
         } else {
           const errorData = await response.json().catch(() => ({}));
           onError(errorData.error ?? "Impossible d'enregistrer la photo.");
@@ -86,7 +90,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, onSuccess, onError]
+    [token, onSuccess, onError, onLogout]
   );
 
   const handleDeletePhoto = useCallback(
@@ -106,6 +110,10 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, photoUrl: null } : u)));
           onSuccess('Photo supprimée avec succès.');
           return true;
+        } else if (response.status === 401) {
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
+          return false;
         } else {
           const errorData = await response.json().catch(() => ({}));
           onError(errorData.error ?? 'Impossible de supprimer la photo.');
@@ -116,7 +124,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, onSuccess, onError]
+    [token, onSuccess, onError, onLogout]
   );
 
   return { users, handleSavePhoto, handleDeletePhoto };
