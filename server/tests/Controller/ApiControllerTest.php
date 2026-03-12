@@ -431,29 +431,87 @@ class ApiControllerTest extends WebTestCase
         unlink($tempFile);
     }
 
-    public function testCantGetPhotoWhenLoggedIn(): void
+    public function testGetPhotoWithoutTokenReturns401WithJsonBody(): void
     {
         $this->client->request('GET', '/api/photos/test_image.jpg');
 
         $this->assertResponseStatusCodeSame(401);
-        $this->assertSame('{"code":401,"message":"JWT Token not found"}', $this->client->getResponse()->getContent());
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('code', $data);
+        $this->assertArrayHasKey('message', $data);
+        $this->assertSame(401, $data['code']);
+        $this->assertSame('JWT Token not found', $data['message']);
     }
 
-    public function testGetPhotoReturnsABinary(): void
+    /**
+     * Fichier WebP : le Content-Type retourné doit être image/webp.
+     */
+    public function testGetPhotoReturnsMimeTypeWebp(): void
     {
         $user = new User('admin_user', ['ROLE_USER']);
         $this->client->loginUser($user, 'api');
 
         $uploadFolder = $this->client->getContainer()->getParameter('upload_folder');
         @mkdir($uploadFolder, 0777, true);
-        $filePath = $uploadFolder.'/test_image_get.jpg';
-        file_put_contents($filePath, 'fake image data');
 
-        $this->client->request('GET', '/api/photos/test_image_get.jpg');
+        $filePath = $uploadFolder.'/photo_mime_test.webp';
+        imagewebp(imagecreatetruecolor(10, 10), $filePath);
+
+        $this->client->request('GET', '/api/photos/photo_mime_test.webp');
 
         $this->assertResponseIsSuccessful();
+        $this->assertStringStartsWith('image/webp', $this->client->getResponse()->headers->get('Content-Type'));
 
         @unlink($filePath);
+    }
+
+    /**
+     * Path traversal : un nom de fichier contenant "../" ne doit JAMAIS
+     * permettre de servir un fichier en dehors du dossier d'uploads.
+     * Comportement attendu : 400 (routing), 404 (fichier absent) ou redirection —
+     * mais en aucun cas un 200 accompagné du contenu d'un fichier système.
+     */
+    public function testGetPhotoPathTraversalDoesNotLeakFiles(): void
+    {
+        $user = new User('admin_user', ['ROLE_USER']);
+        $this->client->loginUser($user, 'api');
+
+        // On tente d'accéder à un fichier hors du dossier d'uploads via ../
+        // Symfony encode les "/" dans les paramètres de route, ce qui rend
+        // la traversée soit impossible (404 routing), soit bloquée par le contrôleur.
+        $this->client->request('GET', '/api/photos/..%2F..%2F..%2Fetc%2Fpasswd');
+
+        $statusCode = $this->client->getResponse()->getStatusCode();
+
+        // Un 200 avec du contenu non-image serait une faille de sécurité
+        $this->assertNotSame(200, $statusCode, 'Path traversal ne doit jamais retourner un 200.');
+
+        // On vérifie qu'aucun contenu "système" n'est retourné (par sécurité si jamais 200 passait)
+        $content = $this->client->getResponse()->getContent();
+        $this->assertStringNotContainsString('root:', $content);
+        $this->assertStringNotContainsString('/bin/bash', $content);
+    }
+
+    /**
+     * Path traversal avec slashes bruts dans l'URL.
+     * Symfony bloque ce type de requête au niveau du routeur (404).
+     */
+    public function testGetPhotoPathTraversalWithRawSlashesIsBlocked(): void
+    {
+        $user = new User('admin_user', ['ROLE_USER']);
+        $this->client->loginUser($user, 'api');
+
+        $this->client->request('GET', '/api/photos/../../../etc/passwd');
+
+        $statusCode = $this->client->getResponse()->getStatusCode();
+
+        $this->assertNotSame(200, $statusCode, 'Un chemin avec ../ ne doit jamais retourner un 200.');
+
+        $content = $this->client->getResponse()->getContent();
+        $this->assertStringNotContainsString('root:', $content);
+        $this->assertStringNotContainsString('/bin/bash', $content);
     }
 
     public function testGetPhotoReturns404IfFileNotFound(): void
