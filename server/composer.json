@@ -1,6 +1,23 @@
 {
+    "name": "nextrombi-ad/nextrombi-ad-server",
+    "description": "Trombinoscope visuel connecté à Active Directory — API Symfony, authentification LDAP/JWT, gestion des photos.",
+    "keywords": [
+        "trombinoscope",
+        "active-directory",
+        "ldap",
+        "symfony",
+        "jwt"
+    ],
+    "homepage": "https://github.com/Cold-FR/NexTrombi-AD",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "NexTrombi-AD Contributors",
+            "homepage": "https://github.com/Cold-FR/NexTrombi-AD/graphs/contributors"
+        }
+    ],
+    "version": "1.0.0",
     "type": "project",
-    "license": "proprietary",
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
