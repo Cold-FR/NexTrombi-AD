@@ -13,7 +13,7 @@ class UploadService
     private const array ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
     public function __construct(
-        #[Autowire('%kernel.project_dir%')] private readonly string $projectDir,
+        #[Autowire('%env(UPLOAD_FOLDER)%')] private readonly string $uploadFolder,
     ) {
     }
 
@@ -24,8 +24,7 @@ class UploadService
     {
         $image = $this->validateAndLoadImage($file);
 
-        $uploadsDirectory = $this->projectDir.'/public/uploads/photos';
-        new Filesystem()->mkdir($uploadsDirectory, 0755);
+        new Filesystem()->mkdir($this->uploadFolder, 0755);
 
         // On redimensionne à une taille raisonnable pour un trombi (ex: 400x400 max)
         $resizedImage = $this->resizeImage($image, 400, 400);
@@ -33,7 +32,7 @@ class UploadService
         $newFilename = Uuid::v4()->toRfc4122().'.webp';
 
         // Sauvegarde en WebP (qualité 80)
-        imagewebp($resizedImage, $uploadsDirectory.'/'.$newFilename, 80);
+        imagewebp($resizedImage, $this->uploadFolder.'/'.$newFilename, 80);
 
         return $newFilename;
     }

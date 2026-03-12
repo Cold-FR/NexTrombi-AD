@@ -233,7 +233,7 @@ L'application supporte deux modes de stockage des photos, configurés via `APP_P
 
 #### Mode `local` (recommandé)
 
-- Les photos sont stockées sur le serveur dans `server/public/uploads/photos/`
+- Les photos sont stockées sur le serveur dans `server/var/uploads/photos/`
 - Un enregistrement en base de données lie le `samAccountName` au fichier
 - Les images sont converties en **WebP** et redimensionnées (400×400 max)
 - **Nécessite** une base de données (MariaDB, MySQL, SQLite…)

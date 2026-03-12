@@ -271,7 +271,7 @@ class ApiControllerTest extends WebTestCase
 
         // On crée un faux fichier physique sur le disque
         $projectDir = $this->client->getContainer()->getParameter('kernel.project_dir');
-        $uploadsDir = $projectDir.'/public/uploads/photos';
+        $uploadsDir = $projectDir.'/var/uploads/photos';
         @mkdir($uploadsDir, 0777, true);
         $filePath = $uploadsDir.'/photo_a_supprimer.webp';
         file_put_contents($filePath, 'fake image data');
@@ -388,7 +388,7 @@ class ApiControllerTest extends WebTestCase
         $em->flush();
 
         $projectDir = $this->client->getContainer()->getParameter('kernel.project_dir');
-        $uploadsDir = $projectDir.'/public/uploads/photos';
+        $uploadsDir = $projectDir.'/var/uploads/photos';
         @mkdir($uploadsDir, 0777, true);
         $oldFilePath = $uploadsDir.'/old_photo.webp';
         file_put_contents($oldFilePath, 'old content');

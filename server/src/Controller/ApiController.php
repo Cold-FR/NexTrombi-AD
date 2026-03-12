@@ -15,6 +15,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class ApiController extends AbstractController
@@ -22,6 +23,7 @@ class ApiController extends AbstractController
     public function __construct(
         #[Autowire('%env(APP_LDAP_USERS_OU)%')] private readonly string $usersOu,
         #[Autowire('%env(APP_PHOTO_STORAGE_MODE)%')] private readonly string $photoStorageMode,
+        #[Autowire('%env(UPLOAD_FOLDER)%')] private readonly string $uploadFolder,
     ) {
     }
 
@@ -72,7 +74,7 @@ class ApiController extends AbstractController
                 } else {
                     // Mode Local : on cherche dans notre tableau PHP construit depuis la BDD
                     if (isset($photoMap[$samaccountname])) {
-                        $photoUrl = $baseUrl.'/uploads/photos/'.$photoMap[$samaccountname];
+                        $photoUrl = $this->generateUrl('api_get_photo', ['filename' => $photoMap[$samaccountname]], UrlGeneratorInterface::ABSOLUTE_URL);
                     }
                 }
 
@@ -145,7 +147,7 @@ class ApiController extends AbstractController
                     $userPhoto->setLdapUsername($ldapUsername);
                 } else {
                     // Supprimer l'ancienne image physique si elle existe
-                    $oldPath = $this->getParameter('kernel.project_dir').'/public/uploads/photos/'.$userPhoto->getPhotoFilename();
+                    $oldPath = $this->uploadFolder.$userPhoto->getPhotoFilename();
                     $fileSys = new Filesystem();
                     if ($fileSys->exists($oldPath)) {
                         $fileSys->remove($oldPath);
@@ -156,7 +158,7 @@ class ApiController extends AbstractController
                 $em->persist($userPhoto);
                 $em->flush();
 
-                $newPhotoUrl = $request->getSchemeAndHttpHost().'/uploads/photos/'.$newFilename;
+                $newPhotoUrl = $this->generateUrl('api_get_photo', ['filename' => $newFilename], UrlGeneratorInterface::ABSOLUTE_URL);
             }
 
             return $this->json([
@@ -197,7 +199,7 @@ class ApiController extends AbstractController
 
                 if ($userPhoto) {
                     // Supprimer l'ancienne image physique si elle existe
-                    $oldPath = $this->getParameter('kernel.project_dir').'/public/uploads/photos/'.$userPhoto->getPhotoFilename();
+                    $oldPath = $this->uploadFolder.$userPhoto->getPhotoFilename();
                     $fileSys = new Filesystem();
                     if ($fileSys->exists($oldPath)) {
                         $fileSys->remove($oldPath);

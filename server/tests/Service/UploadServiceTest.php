@@ -81,7 +81,7 @@ class UploadServiceTest extends TestCase
 
         $this->assertStringEndsWith('.webp', $filename);
 
-        $savedPath = $this->tempDir.'/public/uploads/photos/'.$filename;
+        $savedPath = $this->tempDir.'/var/uploads/photos/'.$filename;
         $this->assertFileExists($savedPath);
 
         $dimensions = getimagesize($savedPath);
@@ -96,7 +96,7 @@ class UploadServiceTest extends TestCase
 
         $filename = $this->uploadService->handleLocalUpload($file);
 
-        $savedPath = $this->tempDir.'/public/uploads/photos/'.$filename;
+        $savedPath = $this->tempDir.'/var/uploads/photos/'.$filename;
         $this->assertFileExists($savedPath);
 
         $dimensions = getimagesize($savedPath);
