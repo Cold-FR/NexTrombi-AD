@@ -25,7 +25,7 @@ final class UserPhotoVoter extends Voter
     protected function supports(string $attribute, mixed $subject): bool
     {
         return in_array($attribute, [self::UPLOAD, self::DELETE])
-            && $subject instanceof UserPhoto;
+            && is_string($subject);
     }
 
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
@@ -43,25 +43,25 @@ final class UserPhotoVoter extends Voter
         }
 
         /**
-         * @var UserPhoto $userPhoto
+         * @var string $ldapUsername
          */
-        $userPhoto = $subject;
+        $ldapUsername = $subject;
 
         return match ($attribute) {
-            self::UPLOAD => $this->canUpload($userPhoto, $user),
-            self::DELETE => $this->canDelete($userPhoto, $user),
+            self::UPLOAD => $this->canUpload($ldapUsername, $user),
+            self::DELETE => $this->canDelete($ldapUsername, $user),
             default => throw new \LogicException('This code should not be reached!'),
         };
     }
 
-    private function canUpload(UserPhoto $userPhoto, UserInterface $user): bool
+    private function canUpload(string $ldapUsername, UserInterface $user): bool
     {
-        return $this->canDelete($userPhoto, $user);
+        return $this->canDelete($ldapUsername, $user);
     }
 
-    private function canDelete(UserPhoto $userPhoto, UserInterface $user): bool
+    private function canDelete(string $ldapUsername, UserInterface $user): bool
     {
-        return $userPhoto->getLdapUsername() === $user->getUserIdentifier();
+        return $ldapUsername === $user->getUserIdentifier();
     }
 
     public function supportsAttribute(string $attribute): bool
@@ -71,6 +71,6 @@ final class UserPhotoVoter extends Voter
 
     public function supportsType(string $subjectType): bool
     {
-        return is_a($subjectType, UserPhoto::class, true);
+        return 'string' === $subjectType;
     }
 }
