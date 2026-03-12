@@ -430,4 +430,31 @@ class ApiControllerTest extends WebTestCase
 
         unlink($tempFile);
     }
+
+    public function testGetPhotoReturnsABinary(): void
+    {
+        $user = new User('admin_user', ['ROLE_USER']);
+        $this->client->loginUser($user, 'api');
+
+        $uploadFolder = $this->client->getContainer()->getParameter('upload_folder');
+        @mkdir($uploadFolder, 0777, true);
+        $filePath = $uploadFolder.'/test_image_get.jpg';
+        file_put_contents($filePath, 'fake image data');
+
+        $this->client->request('GET', '/api/photos/test_image_get.jpg');
+
+        $this->assertResponseIsSuccessful();
+
+        @unlink($filePath);
+    }
+
+    public function testGetPhotoReturns404IfFileNotFound(): void
+    {
+        $user = new User('admin_user', ['ROLE_USER']);
+        $this->client->loginUser($user, 'api');
+
+        $this->client->request('GET', '/api/photos/fichier_fantome_inexistant.webp');
+
+        $this->assertResponseStatusCodeSame(404);
+    }
 }
