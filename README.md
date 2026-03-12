@@ -44,13 +44,20 @@
 
 - 🔐 **Authentification LDAP** — Connexion avec les identifiants Windows (Active Directory)
 - 🪪 **Annuaire visuel** — Fiches collaborateurs avec photo, poste, service, email, téléphone
-- 📸 **Gestion des photos** — Upload par les administrateurs (deux modes de stockage)
-- 🛡️ **Rôles dynamiques** — Droits basés sur les groupes AD (ROLE_USER / ROLE_ADMIN)
+- 📸 **Gestion des photos** — Upload et suppression (deux modes de stockage : local ou AD)
+- 🔒 **Photos sécurisées** — Les images sont servies via un endpoint protégé JWT (pas d'accès public)
+- 👤 **Modification par l'utilisateur** — Chaque collaborateur peut modifier ou supprimer sa propre photo de profil
+- 🛡️ **Rôles dynamiques** — Droits basés sur les groupes AD (ROLE_USER / ROLE_ADMIN) avec Voter Symfony
 - 🔑 **API sécurisée JWT** — Authentification stateless via JSON Web Tokens
-- 🔍 **Recherche instantanée** — Filtrage en temps réel par nom, prénom ou service
-- ♾️ **Infinite scroll** — Chargement progressif des fiches pour des performances optimales
-- 🌙 **Dark mode** — Support natif du thème sombre
+- 🔍 **Recherche instantanée** — Filtrage avec debounce (300 ms) par nom, prénom ou service, avec skeleton de chargement
+- ♾️ **Infinite scroll** — Chargement progressif par lots de 24 fiches via IntersectionObserver
+- 🌙 **Dark mode** — Thème sombre avec animation circulaire (View Transition API) depuis le point de clic
+- 🎬 **Animations fluides** — Transitions de page, modales animées, micro-interactions (Motion/Framer Motion)
+- 💬 **Notifications toast** — Retours visuels avec barre de progression et pause au survol
+- ⚡ **Cache intelligent** — Cache des données utilisateur en sessionStorage (TTL 5 min) + cache mémoire des images (Object URL)
+- 📜 **Mentions légales & RGPD** — Modale intégrée accessible depuis la page de connexion et le footer
 - 📱 **Responsive** — Interface adaptée mobile, tablette et desktop
+- 🎨 **Personnalisable** — Nom de l'organisation et titre de l'application configurables via variables d'environnement
 
 ---
 
@@ -59,28 +66,50 @@
 ```
 NexTrombi-AD/
 ├── client/                # Frontend React + Vite + Tailwind CSS
+│   ├── .env.dist                      # Variables d'environnement (modèle)
 │   ├── src/
 │   │   ├── App.tsx                    # Composant principal (auth + trombinoscope)
+│   │   ├── index.css                  # Styles globaux, scrollbar, View Transitions, animations toast
 │   │   ├── components/
-│   │   │   ├── UserCard.tsx           # Fiche collaborateur
-│   │   │   └── PhotoUploadModal.tsx   # Modale d'upload de photo
-│   │   └── ...                        # Autres (hooks, utils, context, etc.)
+│   │   │   ├── AppNav.tsx             # Barre de navigation avec recherche desktop/mobile
+│   │   │   ├── AppFooter.tsx          # Pied de page (mentions légales, lien GitHub)
+│   │   │   ├── LoginPage.tsx          # Page de connexion LDAP
+│   │   │   ├── UserCard.tsx           # Fiche collaborateur (photo, infos, actions)
+│   │   │   ├── UserGrid.tsx           # Grille responsive avec skeleton / état vide / infinite scroll
+│   │   │   ├── SecureImage.tsx        # Image protégée par JWT (fetch + cache blob)
+│   │   │   ├── PhotoUploadModal.tsx   # Modale d'upload de photo (aperçu en temps réel)
+│   │   │   ├── ConfirmDeleteModal.tsx # Modale de confirmation de suppression
+│   │   │   ├── LegalNoticesModal.tsx  # Modale mentions légales & RGPD
+│   │   │   ├── ThemeToggleButton.tsx  # Bouton soleil/lune animé (View Transition)
+│   │   │   └── ToastContainer.tsx     # Notifications empilables avec barre de progression
+│   │   ├── hooks/
+│   │   │   ├── useAuth.ts            # Gestion de l'authentification (login/logout, rôles, token)
+│   │   │   ├── useUsers.ts           # Chargement des utilisateurs + cache sessionStorage (TTL 5 min)
+│   │   │   ├── useTheme.ts           # Dark mode avec View Transition API (animation circulaire)
+│   │   │   ├── useToast.ts           # Système de notifications toast
+│   │   │   └── useInfiniteScroll.ts  # Intersection Observer pour le chargement progressif
+│   │   └── lib/
+│   │       ├── imageCache.ts          # Cache mémoire des images (Map<src, ObjectURL>)
+│   │       └── motionVariants.ts      # Variants d'animation réutilisables (boutons, modales, etc.)
 │   └── ...
 ├── server/                # Backend API Symfony
 │   ├── src/
 │   │   ├── Controller/
-│   │   │   └── ApiController.php      # Endpoints REST (GET users, POST photo)
+│   │   │   └── ApiController.php      # Endpoints REST (users, photo CRUD, photo sécurisée)
 │   │   ├── Security/
 │   │   │   ├── LdapJsonAuthenticator.php  # Authentification LDAP → JWT
 │   │   │   ├── LdapJitUserProvider.php    # Provider JIT (Just-In-Time) depuis l'AD
-│   │   │   └── User.php                   # Modèle utilisateur en mémoire
+│   │   │   ├── User.php                   # Modèle utilisateur en mémoire
+│   │   │   └── Voter/
+│   │   │       └── UserPhotoVoter.php     # Voter : admin OU propriétaire du profil
 │   │   ├── Service/
 │   │   │   ├── LdapConnection.php     # Service de connexion LDAP (LdapRecord)
-│   │   │   └── UploadService.php      # Traitement et redimensionnement des images
+│   │   │   └── UploadService.php      # Validation, redimensionnement et conversion des images
 │   │   ├── Entity/
 │   │   │   └── UserPhoto.php          # Entité Doctrine (mode local)
 │   │   └── Command/
-│   │       └── TestLdapCommand.php    # Commande de diagnostic LDAP
+│   │       ├── TestLdapCommand.php        # Commande de diagnostic LDAP
+│   │       └── ShowLdapStructureCommand.php # Visualisation de l'arborescence AD (OUs et Conteneurs)
 │   ├── config/
 │   ├── compose.yaml                   # Docker : MariaDB + Samba AD (dev)
 │   └── ...
@@ -95,7 +124,7 @@ Le frontend React communique avec l'API Symfony via des appels REST. L'API inter
 
 | Composant  | Technologie                                                               |
 | ---------- | ------------------------------------------------------------------------- |
-| **Frontend** | React 19, TypeScript, Vite 7, Tailwind CSS 4, Flowbite, Lucide Icons   |
+| **Frontend** | React 19, TypeScript, Vite 7, Tailwind CSS 4, Flowbite, Motion, Lucide Icons |
 | **Backend**  | Symfony 8.0, PHP ≥ 8.5, LdapRecord 4, Doctrine ORM, LexikJWT          |
 | **Base de données** | MariaDB 10.11 (mode local) ou aucune BDD requise (mode AD)      |
 | **Annuaire** | Active Directory (protocole LDAP/LDAPS)                                 |
@@ -210,7 +239,9 @@ Créez un fichier `server/.env.local` (non commité) en vous basant sur `server/
 | **Application** | | |
 | `APP_LDAP_USERS_OU` | OU dans laquelle chercher les utilisateurs | `OU=Utilisateurs,DC=...` |
 | `APP_LDAP_ADMIN_GROUP` | DN du groupe AD donnant le rôle admin | `CN=GG_Admins_Trombi,OU=Groupes,DC=...` |
+| `APP_LDAP_ADMIN_OU` | OU dont les membres héritent du rôle admin | `OU=NTIC` |
 | `APP_PHOTO_STORAGE_MODE` | Mode de stockage des photos | `local` ou `ad` |
+| `UPLOAD_FOLDER` | Dossier de stockage local des photos | `var/uploads/photos` |
 | **JWT** | | |
 | `JWT_SECRET_KEY` | Chemin vers la clé privée JWT | `%kernel.project_dir%/config/jwt/private.pem` |
 | `JWT_PUBLIC_KEY` | Chemin vers la clé publique JWT | `%kernel.project_dir%/config/jwt/public.pem` |
@@ -224,8 +255,7 @@ Créez un fichier `client/.env.local` en vous basant sur `client/.env.dist` :
 | Variable | Description | Exemple |
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | URL de l'API backend | `http://localhost:8000` |
-| `VITE_APP_TITLE` | Titre affiché dans l'application | `Annuaire des Agents` |
-| `VITE_APP_COMPANY_NAME` | Nom de l'organisation | `Mairie de MaVille` |
+| `VITE_APP_COMPANY_NAME` | Nom de l'organisation (affiché dans le footer et la page de connexion) | `Mairie de MaVille` |
 
 ### Mode de stockage des photos
 
@@ -233,7 +263,7 @@ L'application supporte deux modes de stockage des photos, configurés via `APP_P
 
 #### Mode `local` (recommandé)
 
-- Les photos sont stockées sur le serveur dans `server/public/uploads/photos/`
+- Les photos sont stockées sur le serveur dans `server/var/uploads/photos/`
 - Un enregistrement en base de données lie le `samAccountName` au fichier
 - Les images sont converties en **WebP** et redimensionnées (400×400 max)
 - **Nécessite** une base de données (MariaDB, MySQL, SQLite…)
@@ -266,7 +296,10 @@ openssl pkey -in config/jwt/private.pem -out config/jwt/public.pem -pubout
 2. Connectez-vous avec un **identifiant Active Directory** (sAMAccountName + mot de passe Windows)
 3. L'annuaire des collaborateurs s'affiche sous forme de **grille de fiches**
 4. Utilisez la **barre de recherche** pour filtrer par nom, prénom ou service
-5. Les **administrateurs** (membres du groupe AD configuré) voient un bouton caméra au survol des fiches pour modifier les photos de profil
+5. **Chaque utilisateur** peut modifier ou supprimer **sa propre photo** de profil en survolant sa fiche
+6. Les **administrateurs** (membres du groupe AD configuré) peuvent gérer les photos de **tous** les profils
+7. Basculez entre **mode clair et sombre** via le bouton soleil/lune (animation circulaire depuis le point de clic)
+8. Consultez les **mentions légales et la politique RGPD** depuis le lien en bas de page ou sur la page de connexion
 
 ---
 
@@ -312,6 +345,7 @@ docker compose down
 | `composer start`                              | Démarre le serveur web local |
 | `composer db`                                 | Recrée la BDD et lance les migrations |
 | `php bin/console app:test-ldap`               | Teste la connexion au serveur LDAP |
+| `php bin/console app:ldap-structure`           | Affiche l'arborescence des OUs et Conteneurs de l'AD |
 | `php bin/console lexik:jwt:generate-keypair`  | Génère les clés JWT |
 | `php bin/console doctrine:migrations:migrate` | Applique les migrations |
 | `composer test`                               | Lance tous les tests (CS Fixer + PHPStan + YAML) |
@@ -338,7 +372,11 @@ Toutes les routes sont préfixées par `/api`.
 | --- | --- | --- | --- | --- |
 | `POST` | `/api/login` | ❌ | Public | Authentification LDAP → retourne un token JWT |
 | `GET` | `/api/users` | ✅ JWT | `ROLE_USER` | Liste tous les utilisateurs de l'OU configurée |
-| `POST` | `/api/users/{id}/photo` | ✅ JWT | `ROLE_ADMIN` | Upload/mise à jour de la photo d'un utilisateur |
+| `POST` | `/api/users/{id}/photo` | ✅ JWT | Admin ou propriétaire | Upload/mise à jour de la photo d'un utilisateur |
+| `DELETE` | `/api/users/{id}/photo` | ✅ JWT | Admin ou propriétaire | Suppression de la photo d'un utilisateur |
+| `GET` | `/api/photos/{filename}` | ✅ JWT | `ROLE_USER` | Téléchargement sécurisé d'une photo (mode local) |
+
+> **Note :** Les endpoints `POST` et `DELETE` sur `/api/users/{id}/photo` utilisent un **Voter Symfony** (`UserPhotoVoter`) qui autorise l'action si l'utilisateur connecté est **administrateur** OU s'il est le **propriétaire du profil** ciblé.
 
 ### Exemple d'authentification
 

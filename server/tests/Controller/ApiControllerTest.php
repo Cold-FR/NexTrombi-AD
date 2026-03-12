@@ -10,21 +10,29 @@ use LdapRecord\Testing\DirectoryFake;
 use LdapRecord\Testing\LdapFake;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class ApiControllerTest extends WebTestCase
 {
     private KernelBrowser $client;
+    private string $uploadFolder;
 
     protected function setUp(): void
     {
         static::ensureKernelShutdown();
         $this->client = static::createClient();
         $this->client->getContainer()->get(LdapConnection::class);
+        $this->uploadFolder = $this->client->getContainer()->getParameter('upload_folder');
     }
 
     protected function tearDown(): void
     {
+        // Supprime tous les fichiers déposés dans le dossier d'upload de test
+        foreach (glob($this->uploadFolder.'/*') ?: [] as $file) {
+            new Filesystem()->remove($file);
+        }
+
         try {
             DirectoryFake::tearDown();
         } catch (\Throwable) {
@@ -270,10 +278,7 @@ class ApiControllerTest extends WebTestCase
         $em->flush();
 
         // On crée un faux fichier physique sur le disque
-        $projectDir = $this->client->getContainer()->getParameter('kernel.project_dir');
-        $uploadsDir = $projectDir.'/public/uploads/photos';
-        @mkdir($uploadsDir, 0777, true);
-        $filePath = $uploadsDir.'/photo_a_supprimer.webp';
+        $filePath = $this->uploadFolder.'/photo_a_supprimer.webp';
         file_put_contents($filePath, 'fake image data');
 
         // On lance la requête de suppression
@@ -387,10 +392,7 @@ class ApiControllerTest extends WebTestCase
         $em->persist($userPhoto);
         $em->flush();
 
-        $projectDir = $this->client->getContainer()->getParameter('kernel.project_dir');
-        $uploadsDir = $projectDir.'/public/uploads/photos';
-        @mkdir($uploadsDir, 0777, true);
-        $oldFilePath = $uploadsDir.'/old_photo.webp';
+        $oldFilePath = $this->uploadFolder.'/old_photo.webp';
         file_put_contents($oldFilePath, 'old content');
 
         $tempFile = sys_get_temp_dir().'/new_photo.jpg';
@@ -431,5 +433,93 @@ class ApiControllerTest extends WebTestCase
         $this->assertStringContainsString('Format d\'image non supporté', $data['error']);
 
         unlink($tempFile);
+    }
+
+    public function testGetPhotoWithoutTokenReturns401WithJsonBody(): void
+    {
+        $this->client->request('GET', '/api/photos/test_image.jpg');
+
+        $this->assertResponseStatusCodeSame(401);
+
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertIsArray($data);
+        $this->assertArrayHasKey('code', $data);
+        $this->assertArrayHasKey('message', $data);
+        $this->assertSame(401, $data['code']);
+        $this->assertSame('JWT Token not found', $data['message']);
+    }
+
+    /**
+     * Fichier WebP : le Content-Type retourné doit être image/webp.
+     */
+    public function testGetPhotoReturnsMimeTypeWebp(): void
+    {
+        $user = new User('admin_user', ['ROLE_USER']);
+        $this->client->loginUser($user, 'api');
+
+        $filePath = $this->uploadFolder.'/photo_mime_test.webp';
+        imagewebp(imagecreatetruecolor(10, 10), $filePath);
+
+        $this->client->request('GET', '/api/photos/photo_mime_test.webp');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringStartsWith('image/webp', $this->client->getResponse()->headers->get('Content-Type'));
+    }
+
+    /**
+     * Path traversal : un nom de fichier contenant "../" ne doit JAMAIS
+     * permettre de servir un fichier en dehors du dossier d'uploads.
+     * Comportement attendu : 400 (routing), 404 (fichier absent) ou redirection —
+     * mais en aucun cas un 200 accompagné du contenu d'un fichier système.
+     */
+    public function testGetPhotoPathTraversalDoesNotLeakFiles(): void
+    {
+        $user = new User('admin_user', ['ROLE_USER']);
+        $this->client->loginUser($user, 'api');
+
+        // On tente d'accéder à un fichier hors du dossier d'uploads via ../
+        // Symfony encode les "/" dans les paramètres de route, ce qui rend
+        // la traversée soit impossible (404 routing), soit bloquée par le contrôleur.
+        $this->client->request('GET', '/api/photos/..%2F..%2F..%2Fetc%2Fpasswd');
+
+        $statusCode = $this->client->getResponse()->getStatusCode();
+
+        // Un 200 avec du contenu non-image serait une faille de sécurité
+        $this->assertNotSame(200, $statusCode, 'Path traversal ne doit jamais retourner un 200.');
+
+        // On vérifie qu'aucun contenu "système" n'est retourné (par sécurité si jamais 200 passait)
+        $content = $this->client->getResponse()->getContent();
+        $this->assertStringNotContainsString('root:', $content);
+        $this->assertStringNotContainsString('/bin/bash', $content);
+    }
+
+    /**
+     * Path traversal avec slashes bruts dans l'URL.
+     * Symfony bloque ce type de requête au niveau du routeur (404).
+     */
+    public function testGetPhotoPathTraversalWithRawSlashesIsBlocked(): void
+    {
+        $user = new User('admin_user', ['ROLE_USER']);
+        $this->client->loginUser($user, 'api');
+
+        $this->client->request('GET', '/api/photos/../../../etc/passwd');
+
+        $statusCode = $this->client->getResponse()->getStatusCode();
+
+        $this->assertNotSame(200, $statusCode, 'Un chemin avec ../ ne doit jamais retourner un 200.');
+
+        $content = $this->client->getResponse()->getContent();
+        $this->assertStringNotContainsString('root:', $content);
+        $this->assertStringNotContainsString('/bin/bash', $content);
+    }
+
+    public function testGetPhotoReturns404IfFileNotFound(): void
+    {
+        $user = new User('admin_user', ['ROLE_USER']);
+        $this->client->loginUser($user, 'api');
+
+        $this->client->request('GET', '/api/photos/fichier_fantome_inexistant.webp');
+
+        $this->assertResponseStatusCodeSame(404);
     }
 }
