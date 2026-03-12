@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { imageCache } from '../lib/imageCache';
+import { useToast } from '../hooks/useToast';
 
 interface SecureImageProps {
   src: string;
@@ -10,7 +11,8 @@ interface SecureImageProps {
 
 export function SecureImage({ src, alt, className }: SecureImageProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(() => imageCache.get(src) ?? null);
-  const { token } = useAuth();
+  const { token, handleLogout } = useAuth();
+  const { error: toastError } = useToast();
 
   useEffect(() => {
     if (!src) return;
@@ -29,7 +31,11 @@ export function SecureImage({ src, alt, className }: SecureImageProps) {
         });
 
         if (!response.ok) {
-          console.error("Impossible de charger l'image protégée", 'Erreur de chargement');
+          if (response.status === 401) {
+            handleLogout();
+            toastError('Session expirée, veuillez vous reconnecter.');
+          }
+
           return;
         }
 
