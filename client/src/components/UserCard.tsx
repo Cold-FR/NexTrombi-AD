@@ -2,6 +2,7 @@ import { Mail, Phone, Camera, Trash2 } from 'lucide-react';
 import { memo } from 'react';
 import { motion } from 'motion/react';
 import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
+import { SecureImage } from './SecureImage';
 
 export type User = {
   id: string;
@@ -48,7 +49,7 @@ export default memo(function UserCard({
         {/* AVATAR CONTAINER */}
         <div className="group/card relative mb-4">
           {user.photoUrl ? (
-            <img
+            <SecureImage
               className="h-24 w-24 rounded-full border-2 border-gray-50 object-cover shadow-sm dark:border-gray-700"
               src={user.photoUrl}
               alt={`Photo de ${user.firstName}`}
