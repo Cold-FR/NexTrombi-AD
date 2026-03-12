@@ -80,7 +80,7 @@ export default function AppNav({
             onClick={onLogout}
             whileHover={btnHover}
             whileTap={btnTap}
-            className="flex h-9 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:text-red-500"
+            className="flex h-9 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-red-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-red-600 dark:hover:text-white"
             title="Se déconnecter"
           >
             <LogOut size={18} />

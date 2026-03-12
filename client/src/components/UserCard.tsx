@@ -1,8 +1,9 @@
 import { Mail, Phone, Camera, Trash2 } from 'lucide-react';
-import { memo } from 'react';
-import { motion } from 'motion/react';
+import { memo, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
 import { SecureImage } from './SecureImage';
+import { PhotoLightbox } from './PhotoLightbox';
 
 export type User = {
   id: string;
@@ -38,6 +39,7 @@ export default memo(function UserCard({
   onDeletePhoto,
 }: UserCardProps) {
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <motion.div
@@ -49,11 +51,18 @@ export default memo(function UserCard({
         {/* AVATAR CONTAINER */}
         <div className="group/card relative mb-4">
           {user.photoUrl ? (
-            <SecureImage
-              className="h-24 w-24 rounded-full border-2 border-gray-50 object-cover shadow-sm dark:border-gray-700"
-              src={user.photoUrl}
-              alt={`Photo de ${user.firstName}`}
-            />
+            <button
+              onClick={() => setLightboxOpen(true)}
+              className="focus:ring-primary-500 block cursor-zoom-in rounded-full focus:ring-2 focus:ring-offset-2 focus:outline-none"
+              title="Agrandir la photo"
+              type="button"
+            >
+              <SecureImage
+                className="h-24 w-24 rounded-full border-2 border-gray-50 object-cover shadow-sm dark:border-gray-700"
+                src={user.photoUrl}
+                alt={`Photo de ${user.firstName}`}
+              />
+            </button>
           ) : (
             <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-gray-50 bg-gray-100 shadow-sm dark:border-gray-600 dark:bg-gray-700">
               <span className="text-2xl font-medium text-gray-600 dark:text-gray-300">
@@ -131,6 +140,17 @@ export default memo(function UserCard({
           )}
         </div>
       </div>
+
+      {/* LIGHTBOX */}
+      <AnimatePresence>
+        {lightboxOpen && user.photoUrl && (
+          <PhotoLightbox
+            src={user.photoUrl}
+            alt={`Photo de ${user.firstName} ${user.lastName}`}
+            onClose={() => setLightboxOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 });
