@@ -24,12 +24,10 @@ interface UserCardProps {
   onDeletePhoto?: (userId: string) => void;
 }
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
+const cardTransition = { type: 'spring' as const, stiffness: 300, damping: 22 };
 
-const itemTransition = { type: 'spring' as const, stiffness: 300, damping: 22 };
+// Set module-level : retient les IDs déjà animés pour éviter la ré-animation au scroll-back
+const animatedIds = new Set<string>();
 
 export default memo(function UserCard({
   user,
@@ -41,10 +39,14 @@ export default memo(function UserCard({
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
+  const alreadySeen = animatedIds.has(user.id);
+  if (!alreadySeen) animatedIds.add(user.id);
+
   return (
     <motion.div
-      variants={itemVariants}
-      transition={itemTransition}
+      initial={alreadySeen ? false : { opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={cardTransition}
       className="w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
     >
       <div className="flex h-full flex-col items-center px-4 pt-6 pb-6">
