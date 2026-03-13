@@ -179,7 +179,7 @@ export default memo(function UserGrid({
                 className="grid grid-cols-1 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
               >
                 {rowUsers.map((user) => (
-                  <motion.div key={user.id} variants={itemVariants}>
+                  <motion.div key={user.id} variants={itemVariants} className="h-full">
                     <UserCard
                       user={user}
                       isOwnProfile={loggedUsername === user.id}
