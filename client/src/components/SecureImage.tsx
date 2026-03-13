@@ -17,10 +17,16 @@ export function SecureImage({ src, alt, className }: SecureImageProps) {
   useEffect(() => {
     if (!src) return;
 
-    // Déjà en cache → pas besoin de fetcher
-    if (imageCache.has(src)) return;
+    // Déjà en cache → on marque comme récemment utilisé et on se met à jour si besoin
+    const cached = imageCache.get(src);
+    if (cached !== undefined) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setImageSrc(cached);
+      return;
+    }
 
     let isMounted = true;
+    const controller = new AbortController();
 
     const fetchImage = async () => {
       try {
@@ -28,6 +34,7 @@ export function SecureImage({ src, alt, className }: SecureImageProps) {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal: controller.signal,
         });
 
         if (!response.ok) {
@@ -35,7 +42,6 @@ export function SecureImage({ src, alt, className }: SecureImageProps) {
             handleLogout();
             toastError('Session expirée, veuillez vous reconnecter.');
           }
-
           return;
         }
 
@@ -47,6 +53,7 @@ export function SecureImage({ src, alt, className }: SecureImageProps) {
           setImageSrc(objectUrl);
         }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
         console.error("Impossible de charger l'image protégée", error);
       }
     };
@@ -55,9 +62,9 @@ export function SecureImage({ src, alt, className }: SecureImageProps) {
 
     return () => {
       isMounted = false;
-      // On ne révoque PAS l'objectUrl ici : il reste dans le cache
+      controller.abort(); // Annule le fetch si le composant démonte avant la fin
     };
-  }, [src, token]);
+  }, [src, token, handleLogout, toastError]);
 
   if (!imageSrc) {
     return <div className={`animate-pulse bg-gray-200 dark:bg-gray-700 ${className}`}></div>;
