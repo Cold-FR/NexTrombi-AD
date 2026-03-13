@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
 import { X } from 'lucide-react';
 import { SecureImage } from './SecureImage';
@@ -29,7 +30,7 @@ export function PhotoLightbox({ src, alt, onClose }: PhotoLightboxProps) {
     return () => window.removeEventListener('keydown', handleKey);
   }, [onClose]);
 
-  return (
+  return createPortal(
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
       variants={overlayVariants}
@@ -64,6 +65,7 @@ export function PhotoLightbox({ src, alt, onClose }: PhotoLightboxProps) {
           className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain shadow-2xl"
         />
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }
