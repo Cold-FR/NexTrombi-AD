@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { type User } from './components/UserCard';
 import LoginPage from './components/LoginPage';
 import AppNav from './components/AppNav';
@@ -11,6 +11,7 @@ import { useTheme } from './hooks/useTheme';
 import { useToast } from './hooks/useToast';
 import { useAuth } from './hooks/useAuth';
 import { useUsers } from './hooks/useUsers';
+import { useInfiniteScroll } from './hooks/useInfiniteScroll';
 import { AnimatePresence, motion, type Transition } from 'motion/react';
 
 const pageVariants = {
@@ -59,13 +60,8 @@ export default function App() {
     [users, debouncedSearch]
   );
 
-  // Ref du conteneur scrollable — utilisé par le virtualiseur
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Scroll en haut à chaque nouvelle recherche
-  useEffect(() => {
-    scrollContainerRef.current?.scrollTo({ top: 0 });
-  }, [debouncedSearch]);
+  // Infinite scroll
+  const { visibleUsers, hasMore, observerTarget } = useInfiniteScroll(filteredUsers, searchTerm);
 
   // État des modales
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -151,15 +147,17 @@ export default function App() {
               onLogout={handleLogout}
             />
 
-            <div ref={scrollContainerRef} className="scrollbar-overlay flex-1">
+            <div className="scrollbar-overlay flex-1">
               <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
                 <UserGrid
                   allUsers={users}
-                  filteredUsers={filteredUsers}
+                  visibleUsers={visibleUsers}
+                  filteredCount={filteredUsers.length}
                   isAdmin={isAdmin}
                   loggedUsername={username}
+                  hasMore={hasMore}
                   isSearching={isSearching}
-                  scrollContainerRef={scrollContainerRef}
+                  observerTarget={observerTarget}
                   onEditPhoto={openUpload}
                   onDeletePhoto={openDelete}
                 />

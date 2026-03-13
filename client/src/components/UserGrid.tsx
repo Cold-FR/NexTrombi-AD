@@ -1,8 +1,7 @@
-import { SearchX } from 'lucide-react';
-import { memo, useRef, useState, useEffect } from 'react';
+import { Loader2, SearchX } from 'lucide-react';
+import { memo } from 'react';
 import UserCard, { type User } from './UserCard';
 import { AnimatePresence, motion } from 'motion/react';
-import { useVirtualizer } from '@tanstack/react-virtual';
 
 const skeletonVariants = {
   hidden: { opacity: 0 },
@@ -40,154 +39,108 @@ const SkeletonCard = () => (
   </div>
 );
 
-// ── Détection responsive du nombre de colonnes ───────────────────────────────
-const GAP = 24; // gap-6 = 1.5rem = 24px
-const CARD_HEIGHT_ESTIMATE = 320;
-
-function useColumnCount(containerRef: React.RefObject<HTMLDivElement | null>) {
-  const [columns, setColumns] = useState(4);
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      const w = el.clientWidth;
-      setColumns(w >= 1024 ? 4 : w >= 768 ? 3 : w >= 640 ? 2 : 1);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [containerRef]);
-  return columns;
-}
-
-// ── Props ────────────────────────────────────────────────────────────────────
 interface UserGridProps {
   allUsers: User[];
-  filteredUsers: User[];
+  visibleUsers: User[];
+  filteredCount: number;
   isAdmin: boolean;
   loggedUsername: string | null;
+  hasMore: boolean;
   isSearching: boolean;
-  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  observerTarget: React.RefObject<HTMLDivElement | null>;
   onEditPhoto: (id: string) => void;
   onDeletePhoto: (id: string) => void;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
+};
+
 export default memo(function UserGrid({
   allUsers,
-  filteredUsers,
+  visibleUsers,
+  filteredCount,
   isAdmin,
   loggedUsername,
+  hasMore,
   isSearching,
-  scrollContainerRef,
+  observerTarget,
   onEditPhoto,
   onDeletePhoto,
 }: UserGridProps) {
-  const gridContainerRef = useRef<HTMLDivElement>(null);
-  const columns = useColumnCount(gridContainerRef);
-  const rowCount = Math.ceil(filteredUsers.length / columns);
-
-  const rowVirtualizer = useVirtualizer({
-    count: rowCount,
-    getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => CARD_HEIGHT_ESTIMATE,
-    gap: GAP,
-    overscan: 3,
-    measureElement: (el) => el.getBoundingClientRect().height,
-  });
-
   const activeKey =
-    allUsers.length === 0 || isSearching
-      ? 'skeleton'
-      : filteredUsers.length === 0
-        ? 'empty'
-        : 'grid';
+    allUsers.length === 0 || isSearching ? 'skeleton' : filteredCount === 0 ? 'empty' : 'grid';
 
   return (
-    <AnimatePresence mode="wait">
-      {activeKey === 'skeleton' && (
-        <motion.div
-          key="skeleton"
-          variants={skeletonVariants}
-          initial="hidden"
-          animate="show"
-          exit="exit"
-          className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-        >
-          {Array.from({ length: 12 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
-        </motion.div>
-      )}
-
-      {activeKey === 'empty' && (
-        <motion.div
-          key="empty"
-          variants={contentVariants}
-          initial="hidden"
-          animate="show"
-          exit="exit"
-          className="flex flex-col items-center justify-center py-24"
-        >
-          <div className="relative mb-6 flex items-center justify-center">
-            <div className="absolute h-24 w-24 rounded-full bg-gray-100 dark:bg-gray-800" />
-            <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white text-gray-400 shadow-sm dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-500">
-              <SearchX size={28} />
-            </div>
-          </div>
-          <p className="text-base font-semibold text-gray-700 dark:text-gray-300">Aucun résultat</p>
-          <p className="mt-1 max-w-xs text-center text-sm text-gray-400 dark:text-gray-500">
-            Aucun collaborateur ne correspond à votre recherche.
-          </p>
-        </motion.div>
-      )}
-
-      {activeKey === 'grid' && (
-        <motion.div
-          key="grid"
-          variants={contentVariants}
-          initial="hidden"
-          animate="show"
-          exit="exit"
-        >
-          {/* Hauteur totale calculée par le virtualiseur = espace réservé pour toutes les rangées */}
-          <div
-            ref={gridContainerRef}
-            style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}
+    <>
+      <AnimatePresence mode="wait">
+        {activeKey === 'skeleton' && (
+          <motion.div
+            key="skeleton"
+            variants={skeletonVariants}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
           >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const startIdx = virtualRow.index * columns;
-              const rowCards = filteredUsers.slice(startIdx, startIdx + columns);
+            {Array.from({ length: 12 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </motion.div>
+        )}
 
-              return (
-                <div
-                  key={virtualRow.key}
-                  data-index={virtualRow.index}
-                  ref={rowVirtualizer.measureElement}
-                  style={{
-                    position: 'absolute',
-                    top: virtualRow.start,
-                    left: 0,
-                    right: 0,
-                    display: 'grid',
-                    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-                    gap: `${GAP}px`,
-                  }}
-                >
-                  {rowCards.map((user) => (
-                    <UserCard
-                      key={user.id}
-                      user={user}
-                      isOwnProfile={loggedUsername === user.id}
-                      isAdmin={isAdmin}
-                      onEditPhoto={onEditPhoto}
-                      onDeletePhoto={onDeletePhoto}
-                    />
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </motion.div>
+        {activeKey === 'empty' && (
+          <motion.div
+            key="empty"
+            variants={contentVariants}
+            initial="hidden"
+            animate="show"
+            exit="exit"
+            className="flex flex-col items-center justify-center py-24"
+          >
+            <div className="relative mb-6 flex items-center justify-center">
+              <div className="absolute h-24 w-24 rounded-full bg-gray-100 dark:bg-gray-800" />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white text-gray-400 shadow-sm dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-500">
+                <SearchX size={28} />
+              </div>
+            </div>
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-300">
+              Aucun résultat
+            </p>
+            <p className="mt-1 max-w-xs text-center text-sm text-gray-400 dark:text-gray-500">
+              Aucun collaborateur ne correspond à votre recherche.
+            </p>
+          </motion.div>
+        )}
+
+        {activeKey === 'grid' && (
+          <motion.div
+            key="grid"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+          >
+            {visibleUsers.map((user) => (
+              <UserCard
+                key={user.id}
+                user={user}
+                isOwnProfile={loggedUsername === user.id}
+                isAdmin={isAdmin}
+                onEditPhoto={onEditPhoto}
+                onDeletePhoto={onDeletePhoto}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {hasMore && activeKey === 'grid' && (
+        <div ref={observerTarget} className="mt-4 flex w-full justify-center py-10">
+          <Loader2 className="text-primary-500 animate-spin" size={28} />
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 });
