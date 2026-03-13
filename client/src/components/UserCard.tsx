@@ -45,7 +45,7 @@ export default memo(function UserCard({
     <motion.div
       variants={itemVariants}
       transition={itemTransition}
-      className="w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+      className="h-full w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
     >
       <div className="flex h-full flex-col items-center px-4 pt-6 pb-6">
         {/* AVATAR CONTAINER */}

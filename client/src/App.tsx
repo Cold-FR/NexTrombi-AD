@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { type User } from './components/UserCard';
 import LoginPage from './components/LoginPage';
 import AppNav from './components/AppNav';
@@ -11,7 +11,6 @@ import { useTheme } from './hooks/useTheme';
 import { useToast } from './hooks/useToast';
 import { useAuth } from './hooks/useAuth';
 import { useUsers } from './hooks/useUsers';
-import { useInfiniteScroll } from './hooks/useInfiniteScroll';
 import { AnimatePresence, motion, type Transition } from 'motion/react';
 
 const pageVariants = {
@@ -50,14 +49,15 @@ export default function App() {
 
   const isSearching = searchTerm !== debouncedSearch;
 
-  const filteredUsers = users.filter((user) =>
-    `${user.firstName} ${user.lastName} ${user.department}`
-      .toLowerCase()
-      .includes(debouncedSearch.toLowerCase())
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((user) =>
+        `${user.firstName} ${user.lastName} ${user.department}`
+          .toLowerCase()
+          .includes(debouncedSearch.toLowerCase())
+      ),
+    [users, debouncedSearch]
   );
-
-  // Infinite scroll
-  const { visibleUsers, hasMore, observerTarget } = useInfiniteScroll(filteredUsers, searchTerm);
 
   // État des modales
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -147,13 +147,11 @@ export default function App() {
               <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
                 <UserGrid
                   allUsers={users}
-                  visibleUsers={visibleUsers}
+                  visibleUsers={filteredUsers}
                   filteredCount={filteredUsers.length}
                   isAdmin={isAdmin}
                   loggedUsername={username}
-                  hasMore={hasMore}
                   isSearching={isSearching}
-                  observerTarget={observerTarget}
                   onEditPhoto={openUpload}
                   onDeletePhoto={openDelete}
                 />
