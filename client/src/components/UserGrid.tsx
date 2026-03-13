@@ -44,16 +44,6 @@ const SkeletonCard = () => (
 const GAP = 24; // gap-6 = 1.5rem = 24px
 const CARD_HEIGHT_ESTIMATE = 320;
 
-// Variants pour le stagger par rangée
-// La rangée elle-même ne s'anime pas visuellement, elle orchestre ses enfants
-const rowStaggerVariants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } },
-};
-
-// Set module-level : cartes déjà animées → pas de ré-animation au scroll-back
-const seenCardIds = new Set<string>();
-
 function useColumnCount(containerRef: React.RefObject<HTMLDivElement | null>) {
   const [columns, setColumns] = useState(4);
   useEffect(() => {
@@ -76,7 +66,7 @@ interface UserGridProps {
   isAdmin: boolean;
   loggedUsername: string | null;
   isSearching: boolean;
-  scrollContainerEl: HTMLDivElement | null;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   onEditPhoto: (id: string) => void;
   onDeletePhoto: (id: string) => void;
 }
@@ -87,7 +77,7 @@ export default memo(function UserGrid({
   isAdmin,
   loggedUsername,
   isSearching,
-  scrollContainerEl,
+  scrollContainerRef,
   onEditPhoto,
   onDeletePhoto,
 }: UserGridProps) {
@@ -97,7 +87,7 @@ export default memo(function UserGrid({
 
   const rowVirtualizer = useVirtualizer({
     count: rowCount,
-    getScrollElement: () => scrollContainerEl,
+    getScrollElement: () => scrollContainerRef.current,
     estimateSize: () => CARD_HEIGHT_ESTIMATE,
     gap: GAP,
     overscan: 3,
@@ -167,18 +157,11 @@ export default memo(function UserGrid({
               const startIdx = virtualRow.index * columns;
               const rowCards = filteredUsers.slice(startIdx, startIdx + columns);
 
-              // Anime la rangée seulement si elle contient au moins une carte jamais vue
-              const rowIsNew = rowCards.some((u) => !seenCardIds.has(u.id));
-              rowCards.forEach((u) => seenCardIds.add(u.id));
-
               return (
-                <motion.div
+                <div
                   key={virtualRow.key}
                   data-index={virtualRow.index}
                   ref={rowVirtualizer.measureElement}
-                  initial={rowIsNew ? 'hidden' : false}
-                  animate="show"
-                  variants={rowStaggerVariants}
                   style={{
                     position: 'absolute',
                     top: virtualRow.start,
@@ -199,7 +182,7 @@ export default memo(function UserGrid({
                       onDeletePhoto={onDeletePhoto}
                     />
                   ))}
-                </motion.div>
+                </div>
               );
             })}
           </div>

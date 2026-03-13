@@ -8,12 +8,6 @@ export const btnTap = { y: 1 };
 export const iconBtnHover = { scale: 1.1 };
 export const iconBtnTap = { scale: 0.9 };
 
-// Carte utilisateur (pilotée par la rangée virtuelle parente)
-export const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
-
 // Transition lever/coucher de soleil — easings séparés x/y pour tracer un arc
 const sunMoonDuration = 0.25;
 export const sunMoonEnter = {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { type User } from './components/UserCard';
 import LoginPage from './components/LoginPage';
 import AppNav from './components/AppNav';
@@ -59,13 +59,13 @@ export default function App() {
     [users, debouncedSearch]
   );
 
-  // Élément scrollable réel (callback ref) — force un rerender quand il est monté
-  const [scrollContainerEl, setScrollContainerEl] = useState<HTMLDivElement | null>(null);
+  // Ref du conteneur scrollable — utilisé par le virtualiseur
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Scroll en haut à chaque nouvelle recherche
   useEffect(() => {
-    scrollContainerEl?.scrollTo({ top: 0 });
-  }, [debouncedSearch, scrollContainerEl]);
+    scrollContainerRef.current?.scrollTo({ top: 0 });
+  }, [debouncedSearch]);
 
   // État des modales
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -151,7 +151,7 @@ export default function App() {
               onLogout={handleLogout}
             />
 
-            <div ref={setScrollContainerEl} className="scrollbar-overlay flex-1">
+            <div ref={scrollContainerRef} className="scrollbar-overlay flex-1">
               <main className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
                 <UserGrid
                   allUsers={users}
@@ -159,7 +159,7 @@ export default function App() {
                   isAdmin={isAdmin}
                   loggedUsername={username}
                   isSearching={isSearching}
-                  scrollContainerEl={scrollContainerEl}
+                  scrollContainerRef={scrollContainerRef}
                   onEditPhoto={openUpload}
                   onDeletePhoto={openDelete}
                 />
