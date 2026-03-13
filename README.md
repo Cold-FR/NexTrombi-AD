@@ -50,11 +50,11 @@
 - 🛡️ **Rôles dynamiques** — Droits basés sur les groupes AD (ROLE_USER / ROLE_ADMIN) avec Voter Symfony
 - 🔑 **API sécurisée JWT** — Authentification stateless via JSON Web Tokens
 - 🔍 **Recherche instantanée** — Filtrage avec debounce (300 ms) par nom, prénom ou service, avec skeleton de chargement
-- ♾️ **Infinite scroll** — Chargement progressif par lots de 24 fiches via IntersectionObserver
+- ♾️ **Virtual list** — Chargement progressif des utilisateurs avec react-virtual
 - 🌙 **Dark mode** — Thème sombre avec animation circulaire (View Transition API) depuis le point de clic
 - 🎬 **Animations fluides** — Transitions de page, modales animées, micro-interactions (Motion/Framer Motion)
 - 💬 **Notifications toast** — Retours visuels avec barre de progression et pause au survol
-- ⚡ **Cache intelligent** — Cache des données utilisateur en sessionStorage (TTL 5 min) + cache mémoire des images (Object URL)
+- ⚡ **Cache intelligent** — Cache des données utilisateur en sessionStorage (TTL 5 min) + cache mémoire des images
 - 📜 **Mentions légales & RGPD** — Modale intégrée accessible depuis la page de connexion et le footer
 - 📱 **Responsive** — Interface adaptée mobile, tablette et desktop
 - 🎨 **Personnalisable** — Nom de l'organisation et titre de l'application configurables via variables d'environnement

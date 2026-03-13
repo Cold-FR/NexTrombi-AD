@@ -117,21 +117,14 @@
 
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 0.3s;
+  animation: none;
+  mix-blend-mode: normal;
 }
 
-@media (min-width: 768px) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
-    mix-blend-mode: normal;
-  }
-
-  ::view-transition-new(root) {
-    z-index: 9999;
-    /* Durée de 0.6s pour l'effet swoosh */
-    animation: swoosh-in 0.7s ease-out;
-  }
+::view-transition-new(root) {
+  z-index: 9999;
+  /* Durée de 0.6s pour l'effet swoosh */
+  animation: swoosh-in 0.7s ease-out;
 }
 
 @keyframes swoosh-in {
