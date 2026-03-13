@@ -1,7 +1,7 @@
 import { Mail, Phone, Camera, Trash2 } from 'lucide-react';
 import { memo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
+import { btnHover, btnTap, iconBtnHover, iconBtnTap, cardVariants } from '../lib/motionVariants';
 import { SecureImage } from './SecureImage';
 import { PhotoLightbox } from './PhotoLightbox';
 
@@ -26,9 +26,6 @@ interface UserCardProps {
 
 const cardTransition = { type: 'spring' as const, stiffness: 300, damping: 22 };
 
-// Set module-level : retient les IDs déjà animés pour éviter la ré-animation au scroll-back
-const animatedIds = new Set<string>();
-
 export default memo(function UserCard({
   user,
   isAdmin,
@@ -39,13 +36,9 @@ export default memo(function UserCard({
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
-  const alreadySeen = animatedIds.has(user.id);
-  if (!alreadySeen) animatedIds.add(user.id);
-
   return (
     <motion.div
-      initial={alreadySeen ? false : { opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      variants={cardVariants}
       transition={cardTransition}
       className="w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
     >
