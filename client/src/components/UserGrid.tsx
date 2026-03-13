@@ -167,7 +167,7 @@ export default memo(function UserGrid({
                 ref={virtualizer.measureElement}
                 variants={containerVariants}
                 initial="hidden"
-                whileInView="show"
+                animate="show"
                 style={{
                   position: 'absolute',
                   top: 0,

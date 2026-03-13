@@ -70,5 +70,5 @@ export function SecureImage({ src, alt, className }: SecureImageProps) {
     return <div className={`animate-pulse bg-gray-200 dark:bg-gray-700 ${className}`}></div>;
   }
 
-  return <img src={imageSrc} alt={alt} className={className} />;
+  return <img src={imageSrc} alt={alt} className={className} decoding="async" loading="lazy" />;
 }
