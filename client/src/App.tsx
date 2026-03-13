@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { type User } from './components/UserCard';
 import LoginPage from './components/LoginPage';
 import AppNav from './components/AppNav';
@@ -50,10 +50,14 @@ export default function App() {
 
   const isSearching = searchTerm !== debouncedSearch;
 
-  const filteredUsers = users.filter((user) =>
-    `${user.firstName} ${user.lastName} ${user.department}`
-      .toLowerCase()
-      .includes(debouncedSearch.toLowerCase())
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((user) =>
+        `${user.firstName} ${user.lastName} ${user.department}`
+          .toLowerCase()
+          .includes(debouncedSearch.toLowerCase())
+      ),
+    [users, debouncedSearch]
   );
 
   // Infinite scroll
