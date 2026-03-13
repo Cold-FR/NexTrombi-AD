@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
+    "@tanstack/react-virtual": "^3.13.22",
     "flowbite": "^4.0.1",
     "lucide-react": "^0.577.0",
     "motion": "^12.35.2",
