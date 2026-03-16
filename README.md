@@ -87,7 +87,6 @@ NexTrombi-AD/
 │   │   │   ├── useUsers.ts           # Chargement des utilisateurs + cache sessionStorage (TTL 5 min)
 │   │   │   ├── useTheme.ts           # Dark mode avec View Transition API (animation circulaire)
 │   │   │   ├── useToast.ts           # Système de notifications toast
-│   │   │   └── useInfiniteScroll.ts  # Intersection Observer pour le chargement progressif
 │   │   └── lib/
 │   │       ├── imageCache.ts          # Cache mémoire des images (Map<src, ObjectURL>)
 │   │       └── motionVariants.ts      # Variants d'animation réutilisables (boutons, modales, etc.)
