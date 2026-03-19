@@ -159,6 +159,6 @@
         "phpunit/phpunit": "^13.0.5",
         "symfony/browser-kit": "8.0.*",
         "symfony/css-selector": "8.0.*",
-        "symfony/maker-bundle": "^1.66"
+        "symfony/maker-bundle": "^1.67"
     }
 }
