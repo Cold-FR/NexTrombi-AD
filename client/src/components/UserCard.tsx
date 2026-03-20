@@ -48,13 +48,14 @@ export default memo(function UserCard({
     <motion.div
       variants={itemVariants}
       transition={itemTransition}
-      className={`h-full w-full rounded-xl border bg-white shadow-sm transition-opacity dark:bg-gray-800 ${
+      animate={{ opacity: user.hidden ? 0.4 : 1, y: 0 }}
+      className={`h-full w-full rounded-xl border bg-white shadow-sm dark:bg-gray-800 ${
         user.hidden
-          ? 'border-dashed border-gray-300 opacity-40 dark:border-gray-600'
+          ? 'border-dashed border-gray-300 dark:border-gray-600'
           : 'border-gray-200 dark:border-gray-700'
       }`}
     >
-      <div className="flex h-full flex-col items-center px-4 pt-6 pb-6">
+      <div className="relative flex h-full flex-col items-center px-4 pt-6 pb-6">
         {/* AVATAR CONTAINER */}
         <div className="group/card relative mb-4">
           {user.photoUrl ? (
