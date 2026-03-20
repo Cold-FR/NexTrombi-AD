@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\UserIgnore;
 use App\Entity\UserPhoto;
+use App\Repository\UserIgnoreRepository;
 use App\Repository\UserPhotoRepository;
 use App\Security\Voter\UserPhotoVoter;
 use App\Service\LdapConnection;
@@ -30,9 +32,11 @@ class ApiController extends AbstractController
 
     #[IsGranted('ROLE_USER')]
     #[Route('/api/users', name: 'api_users', methods: ['GET'])]
-    public function getUsers(LdapConnection $ldapConnection, UserPhotoRepository $photoRepo, Request $request): JsonResponse
+    public function getUsers(LdapConnection $ldapConnection, UserPhotoRepository $photoRepo, UserIgnoreRepository $ignoreRepo): JsonResponse
     {
         $ldapConnection->getConnection();
+
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
 
         try {
             $nowFileTime = (time() + 11644473600) * 10000000;
@@ -47,13 +51,15 @@ class ApiController extends AbstractController
                 ->select(['samaccountname', 'givenname', 'sn', 'title', 'department', 'mail', 'telephonenumber', 'thumbnailphoto'])
                 ->get();
 
-            // Si mode 'local', on précharge la base de données
-            $photoMap = [];
-            $baseUrl = $request->getSchemeAndHttpHost();
+            // Construire un Set des usernames ignorés
+            $ignoredUsernames = [];
+            foreach ($ignoreRepo->findAll() as $ignore) {
+                $ignoredUsernames[$ignore->getUsername()] = true;
+            }
 
+            $photoMap = [];
             if ('local' === $this->photoStorageMode) {
-                $photosDb = $photoRepo->findAll();
-                foreach ($photosDb as $photo) {
+                foreach ($photoRepo->findAll() as $photo) {
                     $photoMap[$photo->getLdapUsername()] = $photo->getPhotoFilename();
                 }
             }
@@ -63,6 +69,13 @@ class ApiController extends AbstractController
             // Formatage des données
             foreach ($results as $entry) {
                 $samaccountname = $entry->getFirstAttribute('samaccountname');
+                $isHidden = isset($ignoredUsernames[$samaccountname]);
+
+                // Les non-admins ne voient pas du tout les users cachés
+                if ($isHidden && !$isAdmin) {
+                    continue;
+                }
+
                 $photoUrl = null;
 
                 // --- LE CHOIX DU MODE EST ICI ---
@@ -79,7 +92,7 @@ class ApiController extends AbstractController
                     }
                 }
 
-                $users[] = [
+                $user = [
                     'id' => $samaccountname,
                     'firstName' => $entry->getFirstAttribute('givenname'),
                     'lastName' => $entry->getFirstAttribute('sn'),
@@ -89,15 +102,49 @@ class ApiController extends AbstractController
                     'phone' => $entry->getFirstAttribute('telephonenumber') ?? '',
                     'photoUrl' => $photoUrl,
                 ];
+
+                // Le flag hidden n'est envoyé qu'aux admins
+                if ($isAdmin) {
+                    $user['hidden'] = $isHidden;
+                }
+
+                $users[] = $user;
             }
 
-            // Tri par ordre alphabétique sur le nom de famille
             usort($users, fn ($a, $b) => strcmp($a['lastName'], $b['lastName']));
 
             return $this->json($users);
         } catch (\Exception $e) {
             return $this->json(['error' => 'Erreur LDAP : '.$e->getMessage()], 503);
         }
+    }
+
+    /**
+     * Toggle : si déjà ignoré → on retire, sinon → on ajoute.
+     * Réservé aux admins.
+     */
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/api/users/{ldapUsername}/ignore', name: 'api_user_ignore_toggle', requirements: ['ldapUsername' => '.+'], methods: ['POST'])]
+    public function toggleIgnoreUser(
+        string $ldapUsername,
+        UserIgnoreRepository $ignoreRepo,
+        EntityManagerInterface $em,
+    ): JsonResponse {
+        $existing = $ignoreRepo->findOneBy(['username' => $ldapUsername]);
+
+        if ($existing) {
+            $em->remove($existing);
+            $em->flush();
+
+            return $this->json(['hidden' => false]);
+        }
+
+        $ignore = new UserIgnore();
+        $ignore->setUsername($ldapUsername);
+        $em->persist($ignore);
+        $em->flush();
+
+        return $this->json(['hidden' => true]);
     }
 
     #[IsGranted(UserPhotoVoter::UPLOAD, 'ldapUsername')]
