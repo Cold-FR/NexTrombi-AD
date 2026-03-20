@@ -19,7 +19,7 @@ const contentVariants = {
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } }, // Délai un peu plus long
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
 const SkeletonCard = () => (
@@ -73,6 +73,7 @@ interface UserGridProps {
   isSearching: boolean;
   onEditPhoto: (id: string) => void;
   onDeletePhoto: (id: string) => void;
+  onToggleHidden: (id: string) => void;
 }
 
 export default memo(function UserGrid({
@@ -84,6 +85,7 @@ export default memo(function UserGrid({
   isSearching,
   onEditPhoto,
   onDeletePhoto,
+  onToggleHidden,
 }: UserGridProps) {
   const activeKey =
     allUsers.length === 0 || isSearching ? 'skeleton' : filteredCount === 0 ? 'empty' : 'grid';
@@ -98,7 +100,6 @@ export default memo(function UserGrid({
     return chunked;
   }, [visibleUsers, cols]);
 
-  // LA MAGIE EST ICI : On branche le virtualiseur directement sur la div parente de App.tsx
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => document.querySelector('.scrollbar-overlay') as HTMLDivElement | null,
@@ -146,7 +147,6 @@ export default memo(function UserGrid({
       )}
 
       {activeKey === 'grid' && (
-        // Plus de conteneur restrictif, juste le w-full classique !
         <motion.div
           key="grid"
           variants={contentVariants}
@@ -179,13 +179,14 @@ export default memo(function UserGrid({
                 className="grid grid-cols-1 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
               >
                 {rowUsers.map((user) => (
-                  <motion.div key={user.id} variants={itemVariants} className="h-full">
+                  <motion.div key={user.id} variants={itemVariants} className="relative h-full">
                     <UserCard
                       user={user}
                       isOwnProfile={loggedUsername === user.id}
                       isAdmin={isAdmin}
                       onEditPhoto={onEditPhoto}
                       onDeletePhoto={onDeletePhoto}
+                      onToggleHidden={isAdmin ? onToggleHidden : undefined}
                     />
                   </motion.div>
                 ))}

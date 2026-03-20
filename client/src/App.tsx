@@ -29,7 +29,7 @@ export default function App() {
   const { theme, toggleTheme } = useTheme();
   const { toasts, success: toastSuccess, error: toastError, dismiss: toastDismiss } = useToast();
   const { token, isAdmin, username, isLoading, loginError, handleLogin, handleLogout } = useAuth();
-  const { users, handleSavePhoto, handleDeletePhoto } = useUsers({
+  const { users, handleSavePhoto, handleDeletePhoto, handleToggleHidden } = useUsers({
     token,
     onLogout: handleLogout,
     onSuccess: toastSuccess,
@@ -154,6 +154,7 @@ export default function App() {
                   isSearching={isSearching}
                   onEditPhoto={openUpload}
                   onDeletePhoto={openDelete}
+                  onToggleHidden={handleToggleHidden}
                 />
               </main>
             </div>
