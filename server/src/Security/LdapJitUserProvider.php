@@ -15,27 +15,20 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 readonly class LdapJitUserProvider implements UserProviderInterface
 {
     public function __construct(
-        // On récupère le groupe Admin depuis le .env
         #[Autowire('%env(APP_LDAP_ADMIN_GROUP)%')] private string $adminGroup,
         #[Autowire('%env(APP_LDAP_ADMIN_OU)%')] private string $adminOU,
-        // Injecté pour initialiser la connexion dans le Container LdapRecord
         private LdapConnection $ldapConnection,
     ) {
     }
 
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
-        // S'assure que la connexion est bien enregistrée dans le Container LdapRecord
-        $this->ldapConnection->getConnection();
-
-        // 1. On cherche l'utilisateur dans l'AD
         $ldapUser = $this->ldapConnection->findUserBySamAccountName($identifier);
 
         if (!$ldapUser) {
             throw new UserNotFoundException(sprintf('Utilisateur "%s" introuvable dans l\'AD.', $identifier));
         }
 
-        // 2. On récupère ses groupes (l'attribut 'memberof' retourne un tableau de DNs)
         $memberOf = $ldapUser->getAttribute('memberof') ?? [];
         $roles = ['ROLE_USER'];
 
