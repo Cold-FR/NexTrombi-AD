@@ -6,6 +6,7 @@ use App\Repository\UserPhotoRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: UserPhotoRepository::class)]
+#[ORM\UniqueConstraint(name: 'uniq_userphoto_ldapUsername', columns: ['ldap_username'])]
 class UserPhoto
 {
     #[ORM\Id]

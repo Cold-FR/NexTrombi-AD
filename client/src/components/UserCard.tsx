@@ -1,4 +1,4 @@
-import { Mail, Phone, Camera, Trash2 } from 'lucide-react';
+import { Mail, Phone, Camera, Trash2, Eye, EyeOff } from 'lucide-react';
 import { memo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
@@ -14,6 +14,7 @@ export type User = {
   email: string;
   phone: string;
   photoUrl: string | null;
+  hidden?: boolean;
 };
 
 interface UserCardProps {
@@ -22,6 +23,7 @@ interface UserCardProps {
   isOwnProfile: boolean;
   onEditPhoto?: (userId: string) => void;
   onDeletePhoto?: (userId: string) => void;
+  onToggleHidden?: (userId: string) => void;
 }
 
 const itemVariants = {
@@ -37,6 +39,7 @@ export default memo(function UserCard({
   isOwnProfile,
   onEditPhoto,
   onDeletePhoto,
+  onToggleHidden,
 }: UserCardProps) {
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -45,9 +48,14 @@ export default memo(function UserCard({
     <motion.div
       variants={itemVariants}
       transition={itemTransition}
-      className="h-full w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+      animate={{ opacity: user.hidden ? 0.4 : 1, y: 0 }}
+      className={`h-full w-full rounded-xl border bg-white shadow-sm dark:bg-gray-800 ${
+        user.hidden
+          ? 'border-dashed border-gray-300 dark:border-gray-600'
+          : 'border-gray-200 dark:border-gray-700'
+      }`}
     >
-      <div className="flex h-full flex-col items-center px-4 pt-6 pb-6">
+      <div className="relative flex h-full flex-col items-center px-4 pt-6 pb-6">
         {/* AVATAR CONTAINER */}
         <div className="group/card relative mb-4">
           {user.photoUrl ? (
@@ -98,6 +106,23 @@ export default memo(function UserCard({
           )}
         </div>
 
+        {/* BOUTON CACHER/AFFICHER — admin uniquement, coin haut droit */}
+        {isAdmin && onToggleHidden && (
+          <motion.button
+            onClick={() => onToggleHidden(user.id)}
+            whileHover={iconBtnHover}
+            whileTap={iconBtnTap}
+            className={`absolute top-3 right-3 rounded-full p-1.5 shadow-sm ring-1 transition-colors ${
+              user.hidden
+                ? 'bg-amber-100 text-amber-600 ring-amber-200 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-400 dark:ring-amber-700'
+                : 'bg-gray-100 text-gray-400 ring-gray-200 hover:bg-gray-200 hover:text-gray-600 dark:bg-gray-700 dark:text-gray-500 dark:ring-gray-600 dark:hover:text-gray-300'
+            }`}
+            title={user.hidden ? 'Rendre visible' : 'Cacher cet utilisateur'}
+          >
+            {user.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+          </motion.button>
+        )}
+
         {/* INFORMATIONS */}
         <h5
           className="mb-1 line-clamp-2 w-full text-center text-xl font-medium text-gray-900 dark:text-white"
@@ -116,6 +141,13 @@ export default memo(function UserCard({
         <span className="mb-6 rounded-md border border-gray-200 bg-gray-100 px-3 py-1 text-xs font-medium text-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300">
           {user.department}
         </span>
+
+        {/* BADGE CACHÉ — visible uniquement pour les admins */}
+        {isAdmin && user.hidden && (
+          <span className="-mt-4 mb-3 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            Masqué
+          </span>
+        )}
 
         {/* ACTIONS */}
         <div className="mt-auto flex w-full justify-center gap-2">

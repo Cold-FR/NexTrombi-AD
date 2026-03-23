@@ -41,7 +41,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
     const cached = sessionStorage.getItem(USERS_CACHE_KEY);
     if (cached) {
       const { timestamp } = JSON.parse(cached) as CachedUsers;
-      if (Date.now() - timestamp < USERS_CACHE_TTL) return; // cache encore frais → pas de fetch
+      if (Date.now() - timestamp < USERS_CACHE_TTL) return;
     }
 
     const controller = new AbortController();
@@ -100,7 +100,6 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
 
         if (response.ok) {
           const data = await response.json();
-          // Invalider le cache de l'ancienne image
           const oldUser = users.find((u) => u.id === userId);
           if (oldUser?.photoUrl) clearImageCache(oldUser.photoUrl);
 
@@ -147,7 +146,6 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         );
 
         if (response.ok) {
-          // Invalider le cache de l'image supprimée
           const oldUser = users.find((u) => u.id === userId);
           if (oldUser?.photoUrl) clearImageCache(oldUser.photoUrl);
 
@@ -178,5 +176,44 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
     [token, users, onSuccess, onError, onLogout]
   );
 
-  return { users, handleSavePhoto, handleDeletePhoto };
+  const handleToggleHidden = useCallback(
+    async (userId: string) => {
+      if (!token) return;
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users/${userId}/ignore`,
+          {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (response.ok) {
+          const data = (await response.json()) as { hidden: boolean };
+
+          setUsers((prev) => {
+            const updated = prev.map((u) => (u.id === userId ? { ...u, hidden: data.hidden } : u));
+            sessionStorage.setItem(
+              USERS_CACHE_KEY,
+              JSON.stringify({ data: updated, timestamp: Date.now() } satisfies CachedUsers)
+            );
+            return updated;
+          });
+
+          onSuccess(data.hidden ? 'Utilisateur masqué.' : 'Utilisateur visible à nouveau.');
+        } else if (response.status === 401) {
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
+        } else {
+          onError("Impossible de modifier la visibilité de l'utilisateur.");
+        }
+      } catch {
+        onError('Erreur réseau.');
+      }
+    },
+    [token, onSuccess, onError, onLogout]
+  );
+
+  return { users, handleSavePhoto, handleDeletePhoto, handleToggleHidden };
 }
