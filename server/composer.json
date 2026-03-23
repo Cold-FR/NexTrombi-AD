@@ -103,10 +103,14 @@
             "php bin/console lint:yaml config"
         ],
         "test:phpunit": [
+            "php bin/console doctrine:schema:drop --force --env=test",
+            "php bin/console doctrine:schema:create --env=test",
             "php bin/phpunit --colors=always --display-phpunit-notices --display-phpunit-deprecations"
         ],
         "test:phpunit:coverage": [
-            "php bin/phpunit --colors=always --display-phpunit-notices --display-phpunit-deprecations --coverage-html=coverage coverage/"
+            "php bin/console doctrine:schema:drop --force --env=test",
+            "php bin/console doctrine:schema:create --env=test",
+            "php bin/phpunit --colors=always --display-phpunit-notices --display-phpunit-deprecations --coverage-html=coverage/"
         ],
         "test": [
             "@test:csfixer",
