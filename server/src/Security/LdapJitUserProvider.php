@@ -33,16 +33,13 @@ readonly class LdapJitUserProvider implements UserProviderInterface
         $memberOf = is_array($memberOf) ? $memberOf : [$memberOf];
         $roles = ['ROLE_USER'];
 
-        // 3. On vérifie s'il fait partie du groupe d'administration
-        if (in_array($this->adminGroup, $memberOf, true)) {
+        $isAdmin = in_array($this->adminGroup, $memberOf, true)
+            || $this->isInAdminOu($ldapUser->getDn());
+
+        if ($isAdmin) {
             $roles[] = 'ROLE_ADMIN';
         }
 
-        if (str_contains(strtolower($ldapUser->getDn()), strtolower($this->adminOU))) {
-            $roles[] = 'ROLE_ADMIN';
-        }
-
-        // 4. On retourne notre User en mémoire fraîchement créé
         return new User($identifier, $roles);
     }
 
@@ -60,5 +57,15 @@ readonly class LdapJitUserProvider implements UserProviderInterface
     public function supportsClass(string $class): bool
     {
         return User::class === $class;
+    }
+
+    private function isInAdminOu(string $dn): bool
+    {
+        $components = array_map(
+            static fn (string $part) => strtolower(trim($part)),
+            explode(',', $dn)
+        );
+
+        return in_array(strtolower(trim($this->adminOU)), $components, true);
     }
 }
