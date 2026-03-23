@@ -1,4 +1,6 @@
 security:
+    role_hierarchy:
+        ROLE_ADMIN: ROLE_USER
     # On déclare notre Provider JIT
     providers:
         app_ldap_provider:
