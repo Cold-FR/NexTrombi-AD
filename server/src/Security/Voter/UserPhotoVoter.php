@@ -48,15 +48,19 @@ final class UserPhotoVoter extends Voter
         $ldapUsername = $subject;
 
         return match ($attribute) {
-            self::UPLOAD => $this->canUpload($ldapUsername, $user),
+            self::UPLOAD => $this->canUpload(),
             self::DELETE => $this->canDelete($ldapUsername, $user),
             default => throw new \LogicException('This code should not be reached!'),
         };
     }
 
-    private function canUpload(string $ldapUsername, UserInterface $user): bool
+    /**
+     * Aucun utilisateur ne peut uploader de photos.
+     * Seul un administrateur peut le faire. Cela permet de s'assurer que les photos sont conformes (format, taille, etc.) et d'éviter les abus.
+     */
+    private function canUpload(): bool
     {
-        return $this->canDelete($ldapUsername, $user);
+        return false;
     }
 
     private function canDelete(string $ldapUsername, UserInterface $user): bool
