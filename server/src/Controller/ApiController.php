@@ -32,10 +32,8 @@ class ApiController extends AbstractController
 
     #[IsGranted('ROLE_USER')]
     #[Route('/api/users', name: 'api_users', methods: ['GET'])]
-    public function getUsers(LdapConnection $ldapConnection, UserPhotoRepository $photoRepo, UserIgnoreRepository $ignoreRepo): JsonResponse
+    public function getUsers(UserPhotoRepository $photoRepo, UserIgnoreRepository $ignoreRepo): JsonResponse
     {
-        $ldapConnection->getConnection();
-
         $isAdmin = $this->isGranted('ROLE_ADMIN');
 
         try {
