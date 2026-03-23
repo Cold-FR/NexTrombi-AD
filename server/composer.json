@@ -97,7 +97,7 @@
             "php-cs-fixer fix"
         ],
         "test:phpstan": [
-            "php -d --memory_limit=512M vendor/bin/phpstan analyse"
+            "php -d memory_limit=512M vendor/bin/phpstan analyse"
         ],
         "test:yaml": [
             "php bin/console lint:yaml config"
