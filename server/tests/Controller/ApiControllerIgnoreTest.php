@@ -48,10 +48,10 @@ class ApiControllerIgnoreTest extends WebTestCase
         return $ldapFake;
     }
 
-    private function persistIgnore(string $username): void
+    private function persistIgnore(): void
     {
         $ignore = new UserIgnore();
-        $ignore->setUsername($username);
+        $ignore->setUsername('dupont.j');
         $this->em->persist($ignore);
         $this->em->flush();
     }
@@ -107,7 +107,7 @@ class ApiControllerIgnoreTest extends WebTestCase
 
     public function testHiddenUserIsInvisibleToRegularUser(): void
     {
-        $this->persistIgnore('dupont.j');
+        $this->persistIgnore();
 
         $this->setupLdapFake()->expect(
             LdapFake::operation('search')->andReturn([$this->defaultEntry()])
@@ -124,7 +124,7 @@ class ApiControllerIgnoreTest extends WebTestCase
 
     public function testHiddenUserIsVisibleToAdminWithHiddenFlagTrue(): void
     {
-        $this->persistIgnore('dupont.j');
+        $this->persistIgnore();
 
         $this->setupLdapFake()->expect(
             LdapFake::operation('search')->andReturn([$this->defaultEntry()])
@@ -176,7 +176,7 @@ class ApiControllerIgnoreTest extends WebTestCase
 
     public function testMultipleUsersWithSomeHiddenFilteredForRegularUser(): void
     {
-        $this->persistIgnore('dupont.j');
+        $this->persistIgnore();
 
         $this->setupLdapFake()->expect(
             LdapFake::operation('search')->andReturn([
@@ -197,7 +197,7 @@ class ApiControllerIgnoreTest extends WebTestCase
 
     public function testMultipleUsersAdminSeesAllWithCorrectFlags(): void
     {
-        $this->persistIgnore('dupont.j');
+        $this->persistIgnore();
 
         $this->setupLdapFake()->expect(
             LdapFake::operation('search')->andReturn([
@@ -239,7 +239,7 @@ class ApiControllerIgnoreTest extends WebTestCase
 
     public function testToggleIgnoreUnhidesAlreadyHiddenUser(): void
     {
-        $this->persistIgnore('dupont.j');
+        $this->persistIgnore();
 
         $this->client->loginUser(new User('admin', ['ROLE_ADMIN']), 'api');
         $this->client->request('POST', '/api/users/dupont.j/ignore');
