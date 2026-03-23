@@ -30,6 +30,7 @@ readonly class LdapJitUserProvider implements UserProviderInterface
         }
 
         $memberOf = $ldapUser->getAttribute('memberof') ?? [];
+        $memberOf = is_array($memberOf) ? $memberOf : [$memberOf];
         $roles = ['ROLE_USER'];
 
         // 3. On vérifie s'il fait partie du groupe d'administration
