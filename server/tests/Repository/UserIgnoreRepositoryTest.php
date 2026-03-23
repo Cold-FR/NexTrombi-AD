@@ -85,12 +85,11 @@ class UserIgnoreRepositoryTest extends KernelTestCase
         $this->entityManager->persist($ignore1);
         $this->entityManager->flush();
 
+        $this->expectException(UniqueConstraintViolationException::class);
+
         $ignore2 = new UserIgnore();
         $ignore2->setUsername('doublon.user');
         $this->entityManager->persist($ignore2);
-
-        $this->expectException(UniqueConstraintViolationException::class);
-
         $this->entityManager->flush();
     }
 
