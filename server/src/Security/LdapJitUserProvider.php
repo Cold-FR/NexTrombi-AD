@@ -46,12 +46,12 @@ readonly class LdapJitUserProvider implements UserProviderInterface
     public function refreshUser(UserInterface $user): UserInterface
     {
         if (!$user instanceof User) {
-            throw new UnsupportedUserException(sprintf('Instances of "%s" are not supported.', get_class($user)));
+            throw new UnsupportedUserException(sprintf('Les instances de "%s" ne sont pas supportées.', get_class($user)));
         }
 
-        // En mode stateless (JWT), cette méthode est rarement appelée,
-        // mais on recharge l'utilisateur par sécurité.
-        return $this->loadUserByIdentifier($user->getUserIdentifier());
+        // En mode stateless JWT, on reconstruit depuis les données du token
+        // sans aller interroger le LDAP inutilement
+        return $user;
     }
 
     public function supportsClass(string $class): bool
