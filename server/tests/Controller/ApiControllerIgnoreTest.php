@@ -101,6 +101,16 @@ class ApiControllerIgnoreTest extends WebTestCase
         );
     }
 
+    private function makeAdminClient(): void
+    {
+        static::ensureKernelShutdown();
+        $this->client = static::createClient();
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+        \assert($em instanceof EntityManagerInterface);
+        $this->em = $em;
+        $this->client->loginUser(new User('admin', ['ROLE_ADMIN']), 'api');
+    }
+
     // ─────────────────────────────────────────────────────────────
     // GET /api/users — comportement du flag hidden
     // ─────────────────────────────────────────────────────────────
@@ -255,16 +265,17 @@ class ApiControllerIgnoreTest extends WebTestCase
 
     public function testToggleIgnoreIsIdempotentOnThreeConsecutiveCalls(): void
     {
-        $this->client->loginUser(new User('admin', ['ROLE_ADMIN']), 'api');
-
+        $this->makeAdminClient();
         $this->client->request('POST', '/api/users/dupont.j/ignore');
         $this->assertResponseIsSuccessful();
         $this->assertTrue(json_decode($this->client->getResponse()->getContent(), true)['hidden']);
 
+        $this->makeAdminClient();
         $this->client->request('POST', '/api/users/dupont.j/ignore');
         $this->assertResponseIsSuccessful();
         $this->assertFalse(json_decode($this->client->getResponse()->getContent(), true)['hidden']);
 
+        $this->makeAdminClient();
         $this->client->request('POST', '/api/users/dupont.j/ignore');
         $this->assertResponseIsSuccessful();
         $this->assertTrue(json_decode($this->client->getResponse()->getContent(), true)['hidden']);
