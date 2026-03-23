@@ -13,8 +13,6 @@ use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-// On utilise TestCase car on va mocker la seule dépendance (LdapConnection)
-// et on n'a pas besoin de la base de données.
 #[AllowMockObjectsWithoutExpectations]
 class LdapJitUserProviderTest extends TestCase
 {
@@ -24,9 +22,10 @@ class LdapJitUserProviderTest extends TestCase
     protected function setUp(): void
     {
         $this->ldapMock = $this->createMock(LdapConnection::class);
+
         $this->provider = new LdapJitUserProvider(
             adminGroup: 'CN=Admins,DC=test,DC=local',
-            adminOU: 'OU=ntic,DC=test,DC=local',
+            adminOU: 'OU=ntic',
             ldapConnection: $this->ldapMock,
         );
     }
@@ -100,17 +99,26 @@ class LdapJitUserProviderTest extends TestCase
     {
         $existingUser = new User('dupont.j', ['ROLE_USER']);
 
-        $ldapUser = $this->createMock(LdapUser::class);
-        $ldapUser->method('getDn')->willReturn('cn=dupont.j,ou=users,dc=test,dc=local');
-
-        $this->ldapMock->expects($this->once())
-            ->method('findUserBySamAccountName')
-            ->with('dupont.j')
-            ->willReturn($ldapUser);
+        $this->ldapMock->expects($this->never())
+            ->method('findUserBySamAccountName');
 
         $refreshedUser = $this->provider->refreshUser($existingUser);
 
-        $this->assertInstanceOf(User::class, $refreshedUser);
+        $this->assertSame($existingUser, $refreshedUser);
         $this->assertSame('dupont.j', $refreshedUser->getUserIdentifier());
+    }
+
+    public function testRegularUserHasOnlyRoleUser(): void
+    {
+        $ldapUser = $this->createMock(LdapUser::class);
+        $ldapUser->method('getAttribute')->willReturn([]);
+        $ldapUser->method('getDn')->willReturn('CN=Paul,OU=autres,DC=test,DC=local');
+
+        $this->ldapMock->method('findUserBySamAccountName')->willReturn($ldapUser);
+
+        $user = $this->provider->loadUserByIdentifier('martin.p');
+
+        $this->assertSame(['ROLE_USER'], $user->getRoles());
+        $this->assertNotContains('ROLE_ADMIN', $user->getRoles());
     }
 }
