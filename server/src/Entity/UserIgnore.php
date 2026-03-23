@@ -6,6 +6,7 @@ use App\Repository\UserIgnoreRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: UserIgnoreRepository::class)]
+#[ORM\UniqueConstraint(name: 'uniq_userignore_username', columns: ['username'])]
 class UserIgnore
 {
     #[ORM\Id]
@@ -13,7 +14,7 @@ class UserIgnore
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private string $username;
 
     public function getId(): ?int
