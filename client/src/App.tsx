@@ -172,12 +172,14 @@ export default function App() {
               isLoading={isDeleting}
             />
 
-            <PhotoUploadModal
-              isOpen={isUploadOpen}
-              onClose={() => setIsUploadOpen(false)}
-              user={selectedUser}
-              onSave={savePhoto}
-            />
+            {isAdmin && (
+              <PhotoUploadModal
+                isOpen={isUploadOpen}
+                onClose={() => setIsUploadOpen(false)}
+                user={selectedUser}
+                onSave={savePhoto}
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

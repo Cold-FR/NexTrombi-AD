@@ -25,8 +25,8 @@ class UserPhotoVoterTest extends TestCase
         $token = $this->createStub(TokenInterface::class);
         $token->method('getUser')->willReturn(null);
 
-        $result = $voter->vote($token, 'dupont.j', [UserPhotoVoter::UPLOAD]);
-        $this->assertSame(VoterInterface::ACCESS_DENIED, $result);
+        $this->assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, 'dupont.j', [UserPhotoVoter::DELETE]));
+        $this->assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, 'dupont.j', [UserPhotoVoter::UPLOAD]));
     }
 
     public function testVoteAsAdmin(): void
@@ -36,8 +36,8 @@ class UserPhotoVoterTest extends TestCase
         $user = $this->createStub(UserInterface::class);
         $token->method('getUser')->willReturn($user);
 
-        $result = $voter->vote($token, 'dupont.j', [UserPhotoVoter::DELETE]);
-        $this->assertSame(VoterInterface::ACCESS_GRANTED, $result);
+        $this->assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, 'dupont.j', [UserPhotoVoter::DELETE]));
+        $this->assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, 'dupont.j', [UserPhotoVoter::UPLOAD]));
     }
 
     public function testVoteAsOwner(): void
@@ -49,7 +49,7 @@ class UserPhotoVoterTest extends TestCase
         $user->method('getUserIdentifier')->willReturn('dupont.j');
         $token->method('getUser')->willReturn($user);
 
-        $this->assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, 'dupont.j', [UserPhotoVoter::UPLOAD]));
+        $this->assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, 'dupont.j', [UserPhotoVoter::UPLOAD]));
         $this->assertSame(VoterInterface::ACCESS_GRANTED, $voter->vote($token, 'dupont.j', [UserPhotoVoter::DELETE]));
     }
 
@@ -63,5 +63,6 @@ class UserPhotoVoterTest extends TestCase
         $token->method('getUser')->willReturn($user);
 
         $this->assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, 'dupont.j', [UserPhotoVoter::UPLOAD]));
+        $this->assertSame(VoterInterface::ACCESS_DENIED, $voter->vote($token, 'dupont.j', [UserPhotoVoter::DELETE]));
     }
 }
