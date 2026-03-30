@@ -80,7 +80,7 @@ export default memo(function UserCard({
           )}
 
           {/* BOUTON D'ÉDITION (Admin seulement) */}
-          {(isAdmin || isOwnProfile) && onEditPhoto && (
+          {isAdmin && onEditPhoto && (
             <motion.button
               onClick={() => onEditPhoto(user.id)}
               whileHover={iconBtnHover}
@@ -92,7 +92,7 @@ export default memo(function UserCard({
             </motion.button>
           )}
 
-          {/* BOUTON DE SUPPRESSION (Admin seulement, uniquement si une photo existe) */}
+          {/* BOUTON DE SUPPRESSION (Admin et user du profil seulement, uniquement si une photo existe) */}
           {(isAdmin || isOwnProfile) && onDeletePhoto && user.photoUrl && (
             <motion.button
               onClick={() => onDeletePhoto(user.id)}
