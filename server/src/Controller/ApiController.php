@@ -146,8 +146,16 @@ class ApiController extends AbstractController
                 $users[] = $user;
             }
 
-            // Tri de tout le monde
-            usort($users, fn ($a, $b) => strcmp($a['lastName'], $b['lastName']));
+            // Tri de tout le monde (insensible à la casse, et tri par prénom en cas d'égalité)
+            usort($users, function ($a, $b) {
+                $cmp = strnatcasecmp($a['lastName'], $b['lastName']);
+
+                if (0 === $cmp) {
+                    return strnatcasecmp($a['firstName'], $b['firstName']);
+                }
+
+                return $cmp;
+            });
 
             return $this->json($users);
         } catch (\Exception $e) {
