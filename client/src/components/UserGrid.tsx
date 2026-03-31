@@ -4,7 +4,7 @@ import UserCard, { type User } from './UserCard';
 import { AnimatePresence, motion } from 'motion/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { itemVariants } from '../lib/motionVariants';
-import { CustomUserModal } from './CustomUserModal';
+import { CustomUserModal, type CustomUserFormData } from './CustomUserModal';
 
 const skeletonVariants = {
   hidden: { opacity: 0 },
@@ -99,7 +99,8 @@ interface UserGridProps {
   onEditPhoto: (id: string) => void;
   onDeletePhoto: (id: string) => void;
   onToggleHidden: (id: string) => void;
-  onCreateCustomUser?: (userData: unknown) => Promise<boolean>;
+  onCreateCustomUser?: (userData: CustomUserFormData) => Promise<boolean>;
+  onUpdateCustomUser?: (id: string, userData: CustomUserFormData) => Promise<boolean>;
 }
 
 export default memo(function UserGrid({
@@ -113,8 +114,23 @@ export default memo(function UserGrid({
   onDeletePhoto,
   onToggleHidden,
   onCreateCustomUser,
+  onUpdateCustomUser,
 }: UserGridProps) {
-  const [modalOpen, setModalOpen] = useState(false);
+  // Création
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
+  // Édition
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const openEditModal = (id: string) => {
+    const user = allUsers.find((u) => u.id === id) ?? null;
+    setEditingUser(user);
+  };
+
+  const handleEditSubmit = async (data: CustomUserFormData): Promise<boolean> => {
+    if (!editingUser || !onUpdateCustomUser) return false;
+    return onUpdateCustomUser(editingUser.id, data);
+  };
 
   const activeKey =
     allUsers.length === 0 || isSearching ? 'skeleton' : filteredCount === 0 ? 'empty' : 'grid';
@@ -220,7 +236,7 @@ export default memo(function UserGrid({
                     if (user.isFakeCard) {
                       return (
                         <motion.div key="add-btn" variants={itemVariants} className="h-full">
-                          <AddUserCard onClick={() => setModalOpen(true)} />
+                          <AddUserCard onClick={() => setCreateModalOpen(true)} />
                         </motion.div>
                       );
                     }
@@ -234,6 +250,11 @@ export default memo(function UserGrid({
                           onEditPhoto={onEditPhoto}
                           onDeletePhoto={onDeletePhoto}
                           onToggleHidden={isAdmin ? onToggleHidden : undefined}
+                          onEditCustomUser={
+                            isAdmin && user.isCustom && onUpdateCustomUser
+                              ? openEditModal
+                              : undefined
+                          }
                         />
                       </motion.div>
                     );
@@ -245,9 +266,31 @@ export default memo(function UserGrid({
         )}
       </AnimatePresence>
 
+      {/* Modal création */}
       <AnimatePresence>
-        {modalOpen && onCreateCustomUser && (
-          <CustomUserModal onClose={() => setModalOpen(false)} onSubmit={onCreateCustomUser} />
+        {createModalOpen && onCreateCustomUser && (
+          <CustomUserModal
+            onClose={() => setCreateModalOpen(false)}
+            onSubmit={onCreateCustomUser}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Modal édition */}
+      <AnimatePresence>
+        {editingUser !== null && onUpdateCustomUser && (
+          <CustomUserModal
+            onClose={() => setEditingUser(null)}
+            onSubmit={handleEditSubmit}
+            initialData={{
+              firstName: editingUser.firstName,
+              lastName: editingUser.lastName,
+              jobTitle: editingUser.jobTitle ?? '',
+              department: editingUser.department ?? '',
+              email: editingUser.email ?? '',
+              phone: editingUser.phone ?? '',
+            }}
+          />
         )}
       </AnimatePresence>
     </>

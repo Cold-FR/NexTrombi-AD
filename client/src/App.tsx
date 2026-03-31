@@ -29,13 +29,19 @@ export default function App() {
   const { theme, toggleTheme } = useTheme();
   const { toasts, success: toastSuccess, error: toastError, dismiss: toastDismiss } = useToast();
   const { token, isAdmin, username, isLoading, loginError, handleLogin, handleLogout } = useAuth();
-  const { users, handleCreateCustomUser, handleSavePhoto, handleDeletePhoto, handleToggleHidden } =
-    useUsers({
-      token,
-      onLogout: handleLogout,
-      onSuccess: toastSuccess,
-      onError: toastError,
-    });
+  const {
+    users,
+    handleCreateCustomUser,
+    handleUpdateCustomUser,
+    handleSavePhoto,
+    handleDeletePhoto,
+    handleToggleHidden,
+  } = useUsers({
+    token,
+    onLogout: handleLogout,
+    onSuccess: toastSuccess,
+    onError: toastError,
+  });
 
   // Recherche avec debounce pour le skeleton
   const [searchTerm, setSearchTerm] = useState('');
@@ -157,6 +163,7 @@ export default function App() {
                   onDeletePhoto={openDelete}
                   onToggleHidden={handleToggleHidden}
                   onCreateCustomUser={handleCreateCustomUser}
+                  onUpdateCustomUser={handleUpdateCustomUser}
                 />
               </main>
             </div>

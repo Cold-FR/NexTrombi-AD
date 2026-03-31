@@ -1,4 +1,4 @@
-import { Mail, Phone, Camera, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Phone, Camera, Trash2, Eye, EyeOff, Pencil } from 'lucide-react';
 import { memo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
@@ -15,6 +15,7 @@ export type User = {
   phone: string;
   photoUrl: string | null;
   hidden?: boolean;
+  isCustom?: boolean;
 };
 
 interface UserCardProps {
@@ -24,6 +25,8 @@ interface UserCardProps {
   onEditPhoto?: (userId: string) => void;
   onDeletePhoto?: (userId: string) => void;
   onToggleHidden?: (userId: string) => void;
+  /** Ouvre le modal d'édition CustomUser — admin uniquement, custom users uniquement */
+  onEditCustomUser?: (userId: string) => void;
 }
 
 const itemVariants = {
@@ -40,6 +43,7 @@ export default memo(function UserCard({
   onEditPhoto,
   onDeletePhoto,
   onToggleHidden,
+  onEditCustomUser,
 }: UserCardProps) {
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -120,6 +124,19 @@ export default memo(function UserCard({
             title={user.hidden ? 'Rendre visible' : 'Cacher cet utilisateur'}
           >
             {user.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+          </motion.button>
+        )}
+
+        {/* BOUTON MODIFIER (custom users uniquement, admin) — coin haut gauche */}
+        {isAdmin && user.isCustom && onEditCustomUser && (
+          <motion.button
+            onClick={() => onEditCustomUser(user.id)}
+            whileHover={iconBtnHover}
+            whileTap={iconBtnTap}
+            className="absolute top-3 left-3 rounded-full bg-gray-100 p-1.5 text-gray-400 shadow-sm ring-1 ring-gray-200 transition-colors hover:bg-gray-200 hover:text-gray-600 dark:bg-gray-700 dark:text-gray-500 dark:ring-gray-600 dark:hover:text-gray-300"
+            title="Modifier ce collaborateur"
+          >
+            <Pencil size={14} />
           </motion.button>
         )}
 
