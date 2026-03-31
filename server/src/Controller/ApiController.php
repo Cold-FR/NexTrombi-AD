@@ -19,6 +19,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -150,7 +151,7 @@ class ApiController extends AbstractController
 
             return $this->json($users);
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Erreur : '.$e->getMessage()], 500);
+            return $this->json(['error' => 'Erreur : '.$e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -225,7 +226,7 @@ class ApiController extends AbstractController
         $file = $request->files->get('photo');
 
         if (!$file) {
-            return $this->json(['error' => 'Aucune image trouvée dans la requête.'], 400);
+            return $this->json(['error' => 'Aucune image trouvée dans la requête.'], Response::HTTP_BAD_REQUEST);
         }
 
         try {
@@ -282,7 +283,7 @@ class ApiController extends AbstractController
                 'photoUrl' => $newPhotoUrl,
             ]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -329,7 +330,7 @@ class ApiController extends AbstractController
                 'message' => 'Photo supprimée avec succès',
             ]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
