@@ -287,7 +287,7 @@ export default memo(function UserGrid({
               lastName: editingUser.lastName,
               jobTitle: editingUser.jobTitle ?? '',
               department: editingUser.department ?? '',
-              email: editingUser.email ?? '',
+              email: editingUser.email,
               phone: editingUser.phone ?? '',
             }}
           />
