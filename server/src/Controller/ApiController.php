@@ -212,12 +212,30 @@ class ApiController extends AbstractController
 
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/api/custom-users/{id}', name: 'api_custom_users_delete', methods: ['DELETE'])]
-    public function deleteCustomUser(CustomUser $user, EntityManagerInterface $em): JsonResponse
+    public function deleteCustomUser(CustomUser $user, UserIgnoreRepository $userIgnoreRepository, UserPhotoRepository $userPhotoRepository, EntityManagerInterface $em): JsonResponse
     {
+        $userIgnoreRelated = $userIgnoreRepository->findOneBy(['username' => 'custom_'.$user->getId()]);
+        if ($userIgnoreRelated) {
+            $em->remove($userIgnoreRelated);
+        }
+
+        $userPhotoRelated = $userPhotoRepository->findOneBy(['ldapUsername' => 'custom_'.$user->getId()]);
+        if ($userPhotoRelated) {
+            // Supprimer l'ancienne image physique si elle existe
+            $oldPath = $this->uploadFolder.'/'.$userPhotoRelated->getPhotoFilename();
+            $fileSys = new Filesystem();
+            if ($fileSys->exists($oldPath)) {
+                $fileSys->remove($oldPath);
+            }
+
+            $em->remove($userPhotoRelated);
+            $em->flush();
+        }
+
         $em->remove($user);
         $em->flush();
 
-        return $this->json(['message' => 'Collaborateur supprimé avec succès !'], Response::HTTP_NO_CONTENT);
+        return $this->json(['message' => 'Collaborateur supprimé avec succès !']);
     }
 
     /**
