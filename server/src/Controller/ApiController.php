@@ -186,12 +186,14 @@ class ApiController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        $error = $this->hydrateCustomUser(new CustomUser(), $data, $em);
+        $customUser = new CustomUser();
+
+        $error = $this->hydrateCustomUser($customUser, $data, $em);
         if (null !== $error) {
             return $this->json(['error' => $error], 400);
         }
 
-        return $this->json(['message' => 'Utilisateur ajouté avec succès !'], Response::HTTP_CREATED);
+        return $this->json(['message' => 'Utilisateur ajouté avec succès !', 'userId' => $customUser->getId()], Response::HTTP_CREATED);
     }
 
     #[IsGranted('ROLE_ADMIN')]
