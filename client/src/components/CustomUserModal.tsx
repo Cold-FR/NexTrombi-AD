@@ -1,7 +1,7 @@
 import { useState, type SubmitEvent, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'motion/react';
-import { X, UserPlus, Loader2 } from 'lucide-react';
+import { X, UserPlus, Pencil, Loader2 } from 'lucide-react';
 import {
   btnHover,
   btnTap,
@@ -11,21 +11,36 @@ import {
   modalVariants,
 } from '../lib/motionVariants';
 
-interface CustomUserModalProps {
-  onClose: () => void;
-  onSubmit: (userData: unknown) => Promise<boolean>;
+export interface CustomUserFormData {
+  firstName: string;
+  lastName: string;
+  jobTitle: string;
+  department: string;
+  email: string;
+  phone: string;
 }
 
-export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
+interface CustomUserModalProps {
+  onClose: () => void;
+  onSubmit: (userData: CustomUserFormData) => Promise<boolean>;
+  /** Si fourni, le modal s'ouvre en mode édition pré-rempli */
+  initialData?: CustomUserFormData;
+}
+
+const EMPTY_FORM: CustomUserFormData = {
+  firstName: '',
+  lastName: '',
+  jobTitle: '',
+  department: '',
+  email: '',
+  phone: '',
+};
+
+export function CustomUserModal({ onClose, onSubmit, initialData }: CustomUserModalProps) {
+  const isEditMode = initialData !== undefined;
+
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    jobTitle: '',
-    department: '',
-    email: '',
-    phone: '',
-  });
+  const [formData, setFormData] = useState<CustomUserFormData>(initialData ?? EMPTY_FORM);
 
   const isValid =
     formData.firstName.trim() !== '' &&
@@ -75,8 +90,12 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
       >
         <div className="flex items-center justify-between rounded-t-xl border-b border-gray-200 bg-gray-50/50 px-5 py-4 dark:border-gray-700 dark:bg-gray-800/50">
           <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
-            <UserPlus size={20} className="text-primary-600 dark:text-primary-500" />
-            Créer un collaborateur
+            {isEditMode ? (
+              <Pencil size={20} className="text-primary-600 dark:text-primary-500" />
+            ) : (
+              <UserPlus size={20} className="text-primary-600 dark:text-primary-500" />
+            )}
+            {isEditMode ? 'Modifier le collaborateur' : 'Créer un collaborateur'}
           </div>
           <motion.button
             whileHover={iconBtnHover}
@@ -191,8 +210,20 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
               whileTap={loading || !isValid ? {} : btnTap}
               className="bg-primary-600 hover:bg-primary-700 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors focus:ring-4 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
-              {loading ? 'Création…' : 'Créer'}
+              {loading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : isEditMode ? (
+                <Pencil size={16} />
+              ) : (
+                <UserPlus size={16} />
+              )}
+              {loading
+                ? isEditMode
+                  ? 'Mise à jour…'
+                  : 'Création…'
+                : isEditMode
+                  ? 'Mettre à jour'
+                  : 'Créer'}
             </motion.button>
           </div>
         </form>
