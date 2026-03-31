@@ -202,9 +202,24 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         });
 
         if (response.ok) {
-          const newUser: User = await response.json();
-          setUsers((prev) => updateCache([...prev, newUser]));
-          onSuccess('Collaborateur ajouté avec succès.');
+          const data = await response.json();
+
+          setUsers((prev) =>
+            updateCache([
+              ...prev,
+              {
+                id: data.userId,
+                firstName: userData.firstName,
+                lastName: userData.lastName,
+                jobTitle: userData.jobTitle,
+                department: userData.department,
+                email: userData.email,
+                phone: userData.phone,
+                photoUrl: null,
+              } as User,
+            ])
+          );
+          onSuccess(data.message);
           return true;
         }
         if (response.status === 401) {
@@ -235,6 +250,8 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         });
 
         if (response.ok) {
+          const data = await response.json();
+
           setUsers((prev) =>
             updateCache(
               prev.map((u) =>
@@ -252,7 +269,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
               )
             )
           );
-          onSuccess('Collaborateur mis à jour avec succès.');
+          onSuccess(data.message);
           return true;
         }
         if (response.status === 401) {
