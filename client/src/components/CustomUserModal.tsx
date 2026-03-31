@@ -27,6 +27,11 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
     phone: '',
   });
 
+  const isValid =
+    formData.firstName.trim() !== '' &&
+    formData.lastName.trim() !== '' &&
+    formData.email.trim() !== '';
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -36,11 +41,13 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
   }, [onClose]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.target.value = e.target.value.trim();
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
+    if (!isValid) return;
     setLoading(true);
     const success = await onSubmit(formData);
     setLoading(false);
@@ -158,7 +165,7 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
               Téléphone
             </label>
             <input
-              placeholder="06 12 34 56 78"
+              placeholder="0612345678"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
@@ -179,10 +186,10 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
             </motion.button>
             <motion.button
               type="submit"
-              disabled={loading}
-              whileHover={loading ? {} : btnHover}
-              whileTap={loading ? {} : btnTap}
-              className="bg-primary-600 hover:bg-primary-700 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors focus:ring-4 focus:outline-none disabled:opacity-70"
+              disabled={loading || !isValid}
+              whileHover={loading || !isValid ? {} : btnHover}
+              whileTap={loading || !isValid ? {} : btnTap}
+              className="bg-primary-600 hover:bg-primary-700 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors focus:ring-4 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
               {loading ? 'Création…' : 'Créer'}
