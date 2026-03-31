@@ -186,31 +186,71 @@ class ApiController extends AbstractController
     {
         $data = json_decode($request->getContent(), true);
 
-        $custom = new CustomUser();
-        $custom->setFirstName($data['firstName'] ?? 'Prénom');
-        $custom->setLastName($data['lastName'] ?? 'Nom');
-        $custom->setJobTitle($data['jobTitle'] ?? null);
-        $custom->setDepartment($data['department'] ?? null);
-        $custom->setEmail($data['email'] ?? null);
-        $custom->setPhone($data['phone'] ?? null);
+        $error = $this->hydrateCustomUser(new CustomUser(), $data, $em);
+        if (null !== $error) {
+            return $this->json(['error' => $error], 400);
+        }
 
-        $em->persist($custom);
-        $em->flush();
+        return $this->json(['message' => 'Utilisateur ajouté avec succès !'], Response::HTTP_CREATED);
+    }
 
-        return $this->json(['message' => 'Utilisateur ajouté avec succès !'], 201);
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/api/custom-users/{id}', name: 'api_custom_users_update', methods: ['PATCH'])]
+    public function updateCustomUser(CustomUser $user, Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $error = $this->hydrateCustomUser($user, $data, $em);
+        if (null !== $error) {
+            return $this->json(['error' => $error], 400);
+        }
+
+        return $this->json(['message' => 'Utilisateur mis à jour avec succès !']);
     }
 
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/api/custom-users/{id}', name: 'api_custom_users_delete', methods: ['DELETE'])]
-    public function deleteCustomUser(int $id, CustomUserRepository $repo, EntityManagerInterface $em): JsonResponse
+    public function deleteCustomUser(CustomUser $user, EntityManagerInterface $em): JsonResponse
     {
-        $custom = $repo->find($id);
-        if ($custom) {
-            $em->remove($custom);
-            $em->flush();
+        $em->remove($user);
+        $em->flush();
+
+        return $this->json(['message' => 'Utilisateur supprimé'], Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * Valide, hydrate et persiste un CustomUser depuis les données brutes de la requête.
+     * Retourne un message d'erreur en cas d'échec, null si tout s'est bien passé.
+     *
+     * @param array<string, mixed> $data
+     */
+    private function hydrateCustomUser(CustomUser $user, array $data, EntityManagerInterface $em): ?string
+    {
+        $firstName = trim($data['firstName'] ?? '');
+        $lastName = trim($data['lastName'] ?? '');
+        $email = trim($data['email'] ?? '');
+
+        if (empty($firstName) || empty($lastName)) {
+            return 'Le prénom et le nom sont obligatoires';
         }
 
-        return $this->json(['message' => 'Utilisateur supprimé']);
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return 'E-mail incorrect';
+        }
+
+        $nullIfEmpty = static fn (string $value): ?string => '' !== $value ? $value : null;
+
+        $user->setFirstName($firstName);
+        $user->setLastName($lastName);
+        $user->setEmail($email);
+        $user->setJobTitle($nullIfEmpty($data['jobTitle']));
+        $user->setDepartment($nullIfEmpty($data['department']));
+        $user->setPhone($nullIfEmpty($data['phone']));
+
+        $em->persist($user);
+        $em->flush();
+
+        return null;
     }
 
     #[IsGranted(UserPhotoVoter::UPLOAD, 'ldapUsername')]
