@@ -18,7 +18,7 @@ interface CachedUsers {
   timestamp: number;
 }
 
-const API_BASE = () => import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const apiBase = () => import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 /** Met à jour le cache sessionStorage et retourne la liste mise à jour */
 function updateCache(updated: User[]): User[] {
@@ -60,7 +60,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
 
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${API_BASE()}/api/users`, {
+        const response = await fetch(`${apiBase()}/api/users`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal,
         });
@@ -84,13 +84,6 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
     return () => controller.abort();
   }, [token, onLogout, onError]);
 
-  const authHeaders = useCallback(() => ({ Authorization: `Bearer ${token}` }), [token]);
-
-  const handle401 = useCallback(() => {
-    onLogout();
-    onError('Session expirée, veuillez vous reconnecter.');
-  }, [onLogout, onError]);
-
   const handleSavePhoto = useCallback(
     async (userId: string, file: File) => {
       if (!token) return false;
@@ -99,9 +92,9 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       formData.append('photo', file);
 
       try {
-        const response = await fetch(`${API_BASE()}/api/users/${userId}/photo`, {
+        const response = await fetch(`${apiBase()}/api/users/${userId}/photo`, {
           method: 'POST',
-          headers: authHeaders(),
+          headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
 
@@ -117,7 +110,8 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           return true;
         }
         if (response.status === 401) {
-          handle401();
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
           return false;
         }
         const err = await response.json().catch(() => ({}));
@@ -128,7 +122,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, users, authHeaders, handle401, onSuccess, onError]
+    [token, users, onSuccess, onError, onLogout]
   );
 
   const handleDeletePhoto = useCallback(
@@ -136,9 +130,9 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       if (!token) return false;
 
       try {
-        const response = await fetch(`${API_BASE()}/api/users/${userId}/photo`, {
+        const response = await fetch(`${apiBase()}/api/users/${userId}/photo`, {
           method: 'DELETE',
-          headers: authHeaders(),
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (response.ok) {
@@ -152,7 +146,8 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           return true;
         }
         if (response.status === 401) {
-          handle401();
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
           return false;
         }
         const err = await response.json().catch(() => ({}));
@@ -163,7 +158,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, users, authHeaders, handle401, onSuccess, onError]
+    [token, users, onSuccess, onError, onLogout]
   );
 
   const handleToggleHidden = useCallback(
@@ -171,9 +166,9 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       if (!token) return;
 
       try {
-        const response = await fetch(`${API_BASE()}/api/users/${userId}/ignore`, {
+        const response = await fetch(`${apiBase()}/api/users/${userId}/ignore`, {
           method: 'POST',
-          headers: authHeaders(),
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (response.ok) {
@@ -183,7 +178,8 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           );
           onSuccess(data.hidden ? 'Utilisateur masqué.' : 'Utilisateur visible à nouveau.');
         } else if (response.status === 401) {
-          handle401();
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
         } else {
           onError("Impossible de modifier la visibilité de l'utilisateur.");
         }
@@ -191,7 +187,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         onError('Erreur réseau.');
       }
     },
-    [token, authHeaders, handle401, onSuccess, onError]
+    [token, onSuccess, onError, onLogout]
   );
 
   const handleCreateCustomUser = useCallback(
@@ -199,9 +195,9 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       if (!token) return false;
 
       try {
-        const response = await fetch(`${API_BASE()}/api/custom-users`, {
+        const response = await fetch(`${apiBase()}/api/custom-users`, {
           method: 'POST',
-          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(userData),
         });
 
@@ -212,7 +208,8 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           return true;
         }
         if (response.status === 401) {
-          handle401();
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
           return false;
         }
         const err = await response.json().catch(() => ({}));
@@ -223,7 +220,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, authHeaders, handle401, onSuccess, onError]
+    [token, onSuccess, onError, onLogout]
   );
 
   const handleUpdateCustomUser = useCallback(
@@ -231,9 +228,9 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       if (!token) return false;
 
       try {
-        const response = await fetch(`${API_BASE()}/api/custom-users/${userId}`, {
+        const response = await fetch(`${apiBase()}/api/custom-users/${userId}`, {
           method: 'PATCH',
-          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(userData),
         });
 
@@ -259,7 +256,8 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
           return true;
         }
         if (response.status === 401) {
-          handle401();
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
           return false;
         }
         const err = await response.json().catch(() => ({}));
@@ -270,7 +268,7 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         return false;
       }
     },
-    [token, authHeaders, handle401, onSuccess, onError]
+    [token, onSuccess, onError, onLogout]
   );
 
   return {
