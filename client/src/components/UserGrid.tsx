@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { itemVariants } from '../lib/motionVariants';
 import { CustomUserModal, type CustomUserFormData } from './CustomUserModal';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
 
 const skeletonVariants = {
   hidden: { opacity: 0 },
@@ -101,6 +102,7 @@ interface UserGridProps {
   onToggleHidden: (id: string) => void;
   onCreateCustomUser?: (userData: CustomUserFormData) => Promise<boolean>;
   onUpdateCustomUser?: (id: string, userData: CustomUserFormData) => Promise<boolean>;
+  onDeleteCustomUser?: (id: string) => Promise<boolean>;
 }
 
 export default memo(function UserGrid({
@@ -115,6 +117,7 @@ export default memo(function UserGrid({
   onToggleHidden,
   onCreateCustomUser,
   onUpdateCustomUser,
+  onDeleteCustomUser,
 }: UserGridProps) {
   // Création
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -122,9 +125,26 @@ export default memo(function UserGrid({
   // Édition
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
+  // Suppression custom user
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const openEditModal = (id: string) => {
     const user = allUsers.find((u) => u.id === id) ?? null;
     setEditingUser(user);
+  };
+
+  const openDeleteModal = (id: string) => {
+    const user = allUsers.find((u) => u.id === id) ?? null;
+    setUserToDelete(user);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete || !onDeleteCustomUser) return;
+    setIsDeleting(true);
+    const ok = await onDeleteCustomUser(userToDelete.id);
+    setIsDeleting(false);
+    if (ok) setUserToDelete(null);
   };
 
   const handleEditSubmit = async (data: CustomUserFormData): Promise<boolean> => {
@@ -255,6 +275,11 @@ export default memo(function UserGrid({
                               ? openEditModal
                               : undefined
                           }
+                          onDeleteCustomUser={
+                            isAdmin && user.isCustom && onDeleteCustomUser
+                              ? openDeleteModal
+                              : undefined
+                          }
                         />
                       </motion.div>
                     );
@@ -293,6 +318,27 @@ export default memo(function UserGrid({
           />
         )}
       </AnimatePresence>
+
+      {/* Modal suppression custom user */}
+      <ConfirmDeleteModal
+        isOpen={userToDelete !== null}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        user={userToDelete}
+        isLoading={isDeleting}
+        title="Supprimer le collaborateur"
+        description={
+          userToDelete && (
+            <>
+              Voulez-vous vraiment supprimer{' '}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                {userToDelete.firstName} {userToDelete.lastName}
+              </span>{' '}
+              ? Cette action est irréversible.
+            </>
+          )
+        }
+      />
     </>
   );
 });

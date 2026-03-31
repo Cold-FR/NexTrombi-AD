@@ -26,6 +26,7 @@ interface UserCardProps {
   onDeletePhoto?: (userId: string) => void;
   onToggleHidden?: (userId: string) => void;
   onEditCustomUser?: (userId: string) => void;
+  onDeleteCustomUser?: (userId: string) => void;
 }
 
 export default memo(function UserCard({
@@ -36,6 +37,7 @@ export default memo(function UserCard({
   onDeletePhoto,
   onToggleHidden,
   onEditCustomUser,
+  onDeleteCustomUser,
 }: UserCardProps) {
   // Défense contre des champs undefined si le backend renvoie un objet incomplet
   const firstName = user.firstName ?? '';
@@ -132,6 +134,19 @@ export default memo(function UserCard({
             title="Modifier ce collaborateur"
           >
             <Pencil size={14} />
+          </motion.button>
+        )}
+
+        {/* BOUTON SUPPRIMER (custom users uniquement, admin) — coin haut gauche */}
+        {isAdmin && user.isCustom && onDeleteCustomUser && (
+          <motion.button
+            onClick={() => onDeleteCustomUser(user.id)}
+            whileHover={iconBtnHover}
+            whileTap={iconBtnTap}
+            className="absolute top-3 left-12 rounded-full bg-gray-100 p-1.5 text-gray-400 shadow-sm ring-1 ring-gray-200 transition-colors hover:bg-gray-200 hover:text-gray-600 dark:bg-gray-700 dark:text-gray-500 dark:ring-gray-600 dark:hover:text-gray-300"
+            title="Supprimer ce collaborateur"
+          >
+            <Trash2 size={14} />
           </motion.button>
         )}
 

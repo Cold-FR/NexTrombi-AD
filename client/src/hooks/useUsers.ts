@@ -292,6 +292,42 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
     [token, onSuccess, onError, onLogout]
   );
 
+  const handleDeleteCustomUser = useCallback(
+    async (userId: string): Promise<boolean> => {
+      if (!token) return false;
+
+      try {
+        const response = await fetch(
+          `${apiBase()}/api/custom-users/${userId.replace('custom_', '')}`,
+          {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+
+          setUsers((prev) => updateCache(prev.filter((u) => u.id !== userId)));
+          onSuccess(data.message);
+          return true;
+        }
+        if (response.status === 401) {
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
+          return false;
+        }
+        const err = await response.json().catch(() => ({}));
+        onError(err.error ?? 'Impossible de supprimer le collaborateur.');
+        return false;
+      } catch {
+        onError('Erreur réseau.');
+        return false;
+      }
+    },
+    [token, onSuccess, onError, onLogout]
+  );
+
   return {
     users,
     handleSavePhoto,
@@ -299,5 +335,6 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
     handleToggleHidden,
     handleCreateCustomUser,
     handleUpdateCustomUser,
+    handleDeleteCustomUser,
   };
 }

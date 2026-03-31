@@ -33,6 +33,7 @@ export default function App() {
     users,
     handleCreateCustomUser,
     handleUpdateCustomUser,
+    handleDeleteCustomUser,
     handleSavePhoto,
     handleDeletePhoto,
     handleToggleHidden,
@@ -164,6 +165,7 @@ export default function App() {
                   onToggleHidden={handleToggleHidden}
                   onCreateCustomUser={handleCreateCustomUser}
                   onUpdateCustomUser={handleUpdateCustomUser}
+                  onDeleteCustomUser={handleDeleteCustomUser}
                 />
               </main>
             </div>
