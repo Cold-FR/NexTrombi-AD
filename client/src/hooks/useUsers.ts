@@ -29,30 +29,25 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
     }
   });
 
-  // Chargement initial
-  useEffect(() => {
-    if (!token) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUsers([]);
-      sessionStorage.removeItem(USERS_CACHE_KEY);
-      return;
-    }
+  const fetchUsers = useCallback(
+    async (signal?: AbortSignal, forceRefresh = false) => {
+      if (!token) return;
 
-    const cached = sessionStorage.getItem(USERS_CACHE_KEY);
-    if (cached) {
-      const { timestamp } = JSON.parse(cached) as CachedUsers;
-      if (Date.now() - timestamp < USERS_CACHE_TTL) return;
-    }
+      // Si on ne force pas le rafraîchissement, on vérifie le cache
+      if (!forceRefresh) {
+        const cached = sessionStorage.getItem(USERS_CACHE_KEY);
+        if (cached) {
+          const { timestamp } = JSON.parse(cached) as CachedUsers;
+          if (Date.now() - timestamp < USERS_CACHE_TTL) return;
+        }
+      }
 
-    const controller = new AbortController();
-
-    const fetchUsers = async () => {
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users`,
           {
             headers: { Authorization: `Bearer ${token}` },
-            signal: controller.signal,
+            signal,
           }
         );
 
@@ -72,14 +67,25 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         if (err instanceof Error && err.name === 'AbortError') return;
         onError("Impossible de charger l'annuaire.");
       }
-    };
+    },
+    [token, onLogout, onError]
+  );
 
-    fetchUsers();
+  useEffect(() => {
+    if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUsers([]);
+      sessionStorage.removeItem(USERS_CACHE_KEY);
+      return;
+    }
+
+    const controller = new AbortController();
+    fetchUsers(controller.signal);
 
     return () => {
       controller.abort();
     };
-  }, [token, onLogout, onError]);
+  }, [token, fetchUsers]);
 
   const handleSavePhoto = useCallback(
     async (userId: string, file: File) => {
@@ -215,5 +221,43 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
     [token, onSuccess, onError, onLogout]
   );
 
-  return { users, handleSavePhoto, handleDeletePhoto, handleToggleHidden };
+  const handleCreateCustomUser = useCallback(
+    async (userData: unknown) => {
+      if (!token) return false;
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/custom-users`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+          }
+        );
+
+        if (response.ok) {
+          onSuccess('Utilisateur créé avec succès.');
+
+          await fetchUsers(undefined, true);
+          return true;
+        } else if (response.status === 401) {
+          onLogout();
+          onError('Session expirée, veuillez vous reconnecter.');
+          return false;
+        } else {
+          onError("Impossible de créer l'utilisateur.");
+          return false;
+        }
+      } catch {
+        onError('Erreur réseau.');
+        return false;
+      }
+    },
+    [token, onSuccess, onError, onLogout, fetchUsers]
+  );
+
+  return { users, handleSavePhoto, handleDeletePhoto, handleToggleHidden, handleCreateCustomUser };
 }
