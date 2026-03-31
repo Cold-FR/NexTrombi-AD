@@ -28,13 +28,6 @@ interface UserCardProps {
   onEditCustomUser?: (userId: string) => void;
 }
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
-
-const itemTransition = { type: 'spring' as const, stiffness: 300, damping: 22 };
-
 export default memo(function UserCard({
   user,
   isAdmin,
@@ -53,9 +46,8 @@ export default memo(function UserCard({
 
   return (
     <motion.div
-      variants={itemVariants}
-      transition={itemTransition}
-      animate={{ opacity: user.hidden ? 0.4 : 1, y: 0 }}
+      animate={{ opacity: user.hidden ? 0.4 : 1 }}
+      transition={{ duration: 0.2 }}
       className={`h-full w-full rounded-xl border bg-white shadow-sm dark:bg-gray-800 ${
         user.hidden
           ? 'border-dashed border-gray-300 dark:border-gray-600'
