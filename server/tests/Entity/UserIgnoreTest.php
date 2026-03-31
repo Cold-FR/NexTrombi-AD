@@ -23,11 +23,4 @@ class UserIgnoreTest extends TestCase
         $this->assertSame($userIgnore, $result);
         $this->assertSame('dupont.j', $userIgnore->getUsername());
     }
-
-    public function testSetLdapUsernameReturnsStaticForFluentInterface(): void
-    {
-        $userIgnore = new UserIgnore();
-
-        $this->assertInstanceOf(UserIgnore::class, $userIgnore->setUsername('martin.p'));
-    }
 }

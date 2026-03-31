@@ -2,8 +2,10 @@
 
 namespace App\Controller;
 
+use App\Entity\CustomUser;
 use App\Entity\UserIgnore;
 use App\Entity\UserPhoto;
+use App\Repository\CustomUserRepository;
 use App\Repository\UserIgnoreRepository;
 use App\Repository\UserPhotoRepository;
 use App\Security\Voter\UserPhotoVoter;
@@ -17,6 +19,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -32,7 +35,7 @@ class ApiController extends AbstractController
 
     #[IsGranted('ROLE_USER')]
     #[Route('/api/users', name: 'api_users', methods: ['GET'])]
-    public function getUsers(UserPhotoRepository $photoRepo, UserIgnoreRepository $ignoreRepo): JsonResponse
+    public function getUsers(UserPhotoRepository $photoRepo, UserIgnoreRepository $ignoreRepo, CustomUserRepository $customUserRepo): JsonResponse
     {
         $isAdmin = $this->isGranted('ROLE_ADMIN');
 
@@ -55,11 +58,10 @@ class ApiController extends AbstractController
                 $ignoredUsernames[$ignore->getUsername()] = true;
             }
 
+            // Pour optimiser, on charge TOUTES les photos locales (utiles pour le mode local OU pour les CustomUsers)
             $photoMap = [];
-            if ('local' === $this->photoStorageMode) {
-                foreach ($photoRepo->findAll() as $photo) {
-                    $photoMap[$photo->getLdapUsername()] = $photo->getPhotoFilename();
-                }
+            foreach ($photoRepo->findAll() as $photo) {
+                $photoMap[$photo->getLdapUsername()] = $photo->getPhotoFilename();
             }
 
             $users = [];
@@ -99,6 +101,7 @@ class ApiController extends AbstractController
                     'email' => $entry->getFirstAttribute('mail') ?? '',
                     'phone' => $entry->getFirstAttribute('telephonenumber') ?? '',
                     'photoUrl' => $photoUrl,
+                    'isCustom' => false,
                 ];
 
                 // Le flag hidden n'est envoyé qu'aux admins
@@ -109,11 +112,54 @@ class ApiController extends AbstractController
                 $users[] = $user;
             }
 
-            usort($users, fn ($a, $b) => strcmp($a['lastName'], $b['lastName']));
+            // Ajout des CustomUsers
+            $customUsers = $customUserRepo->findAll();
+            foreach ($customUsers as $custom) {
+                $customId = 'custom_'.$custom->getId();
+                $isHidden = isset($ignoredUsernames[$customId]);
+
+                if ($isHidden && !$isAdmin) {
+                    continue;
+                }
+
+                $photoUrl = null;
+                if (isset($photoMap[$customId])) {
+                    // Les custom users utilisent toujours le mode local
+                    $photoUrl = $this->generateUrl('api_get_photo', ['filename' => $photoMap[$customId]], UrlGeneratorInterface::ABSOLUTE_URL);
+                }
+
+                $user = [
+                    'id' => $customId,
+                    'firstName' => $custom->getFirstName(),
+                    'lastName' => $custom->getLastName(),
+                    'jobTitle' => $custom->getJobTitle() ?? 'Agent',
+                    'department' => $custom->getDepartment() ?? 'Non renseigné',
+                    'email' => $custom->getEmail(),
+                    'phone' => $custom->getPhone() ?? '',
+                    'photoUrl' => $photoUrl,
+                    'isCustom' => true,
+                ];
+
+                if ($isAdmin) {
+                    $user['hidden'] = $isHidden;
+                }
+                $users[] = $user;
+            }
+
+            // Tri de tout le monde (insensible à la casse, et tri par prénom en cas d'égalité)
+            usort($users, function ($a, $b) {
+                $cmp = strnatcasecmp($a['lastName'], $b['lastName']);
+
+                if (0 === $cmp) {
+                    return strnatcasecmp($a['firstName'], $b['firstName']);
+                }
+
+                return $cmp;
+            });
 
             return $this->json($users);
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Erreur LDAP : '.$e->getMessage()], 503);
+            return $this->json(['error' => 'Erreur : '.$e->getMessage()], Response::HTTP_SERVICE_UNAVAILABLE);
         }
     }
 
@@ -123,11 +169,8 @@ class ApiController extends AbstractController
      */
     #[IsGranted('ROLE_ADMIN')]
     #[Route('/api/users/{ldapUsername}/ignore', name: 'api_user_ignore_toggle', requirements: ['ldapUsername' => '.+'], methods: ['POST'])]
-    public function toggleIgnoreUser(
-        string $ldapUsername,
-        UserIgnoreRepository $ignoreRepo,
-        EntityManagerInterface $em,
-    ): JsonResponse {
+    public function toggleIgnoreUser(string $ldapUsername, UserIgnoreRepository $ignoreRepo, EntityManagerInterface $em): JsonResponse
+    {
         $existing = $ignoreRepo->findOneBy(['username' => $ldapUsername]);
 
         if ($existing) {
@@ -145,6 +188,99 @@ class ApiController extends AbstractController
         return $this->json(['hidden' => true]);
     }
 
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/api/custom-users', name: 'api_custom_users_create', methods: ['POST'])]
+    public function createCustomUser(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $customUser = new CustomUser();
+
+        $error = $this->hydrateCustomUser($customUser, $data, $em);
+        if (null !== $error) {
+            return $this->json(['error' => $error], 400);
+        }
+
+        return $this->json(['message' => 'Collaborateur créé avec succès !', 'userId' => $customUser->getId()], Response::HTTP_CREATED);
+    }
+
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/api/custom-users/{id}', name: 'api_custom_users_update', methods: ['PATCH'])]
+    public function updateCustomUser(CustomUser $user, Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $error = $this->hydrateCustomUser($user, $data, $em);
+        if (null !== $error) {
+            return $this->json(['error' => $error], 400);
+        }
+
+        return $this->json(['message' => 'Collaborateur mis à jour avec succès !']);
+    }
+
+    #[IsGranted('ROLE_ADMIN')]
+    #[Route('/api/custom-users/{id}', name: 'api_custom_users_delete', methods: ['DELETE'])]
+    public function deleteCustomUser(CustomUser $user, UserIgnoreRepository $userIgnoreRepository, UserPhotoRepository $userPhotoRepository, EntityManagerInterface $em): JsonResponse
+    {
+        $userIgnoreRelated = $userIgnoreRepository->findOneBy(['username' => 'custom_'.$user->getId()]);
+        if ($userIgnoreRelated) {
+            $em->remove($userIgnoreRelated);
+        }
+
+        $userPhotoRelated = $userPhotoRepository->findOneBy(['ldapUsername' => 'custom_'.$user->getId()]);
+        if ($userPhotoRelated) {
+            // Supprimer l'ancienne image physique si elle existe
+            $oldPath = $this->uploadFolder.'/'.$userPhotoRelated->getPhotoFilename();
+            $fileSys = new Filesystem();
+            if ($fileSys->exists($oldPath)) {
+                $fileSys->remove($oldPath);
+            }
+
+            $em->remove($userPhotoRelated);
+            $em->flush();
+        }
+
+        $em->remove($user);
+        $em->flush();
+
+        return $this->json(['message' => 'Collaborateur supprimé avec succès !']);
+    }
+
+    /**
+     * Valide, hydrate et persiste un CustomUser depuis les données brutes de la requête.
+     * Retourne un message d'erreur en cas d'échec, null si tout s'est bien passé.
+     *
+     * @param array<string, mixed> $data
+     */
+    private function hydrateCustomUser(CustomUser $user, array $data, EntityManagerInterface $em): ?string
+    {
+        $firstName = trim($data['firstName'] ?? '');
+        $lastName = trim($data['lastName'] ?? '');
+        $email = trim($data['email'] ?? '');
+
+        if (empty($firstName) || empty($lastName)) {
+            return 'Le prénom et le nom sont obligatoires';
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return 'E-mail incorrect';
+        }
+
+        $nullIfEmpty = static fn (string $value): ?string => '' !== $value ? $value : null;
+
+        $user->setFirstName($firstName);
+        $user->setLastName($lastName);
+        $user->setEmail($email);
+        $user->setJobTitle($nullIfEmpty($data['jobTitle']));
+        $user->setDepartment($nullIfEmpty($data['department']));
+        $user->setPhone($nullIfEmpty($data['phone']));
+
+        $em->persist($user);
+        $em->flush();
+
+        return null;
+    }
+
     #[IsGranted(UserPhotoVoter::UPLOAD, 'ldapUsername')]
     #[Route('/api/users/{ldapUsername}/photo', name: 'api_photo_upload', requirements: ['ldapUsername' => '.+'], methods: ['POST'])]
     public function uploadPhoto(
@@ -158,11 +294,14 @@ class ApiController extends AbstractController
         $file = $request->files->get('photo');
 
         if (!$file) {
-            return $this->json(['error' => 'Aucune image trouvée dans la requête.'], 400);
+            return $this->json(['error' => 'Aucune image trouvée dans la requête.'], Response::HTTP_BAD_REQUEST);
         }
 
         try {
-            if ('ad' === $this->photoStorageMode) {
+            $isCustomUser = str_starts_with($ldapUsername, 'custom_');
+
+            // Si le mode est AD MAIS que l'utilisateur n'est pas dans l'AD, on le force en base locale
+            if ('ad' === $this->photoStorageMode && !$isCustomUser) {
                 // --- MODE ACTIVE DIRECTORY ---
                 $ldapConnection->getConnection();
 
@@ -212,7 +351,7 @@ class ApiController extends AbstractController
                 'photoUrl' => $newPhotoUrl,
             ]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -225,7 +364,9 @@ class ApiController extends AbstractController
         EntityManagerInterface $em,
     ): JsonResponse {
         try {
-            if ('ad' === $this->photoStorageMode) {
+            $isCustomUser = str_starts_with($ldapUsername, 'custom_');
+
+            if ('ad' === $this->photoStorageMode && !$isCustomUser) {
                 // --- MODE ACTIVE DIRECTORY ---
                 $ldapConnection->getConnection();
 
@@ -235,7 +376,6 @@ class ApiController extends AbstractController
                     return $this->json(['error' => 'Utilisateur introuvable dans l\'AD.'], 404);
                 }
 
-                // On écrase l'attribut (LdapRecord gère l'encodage binaire tout seul)
                 $user->thumbnailphoto = null;
                 $user->save();
             } else {
@@ -260,7 +400,7 @@ class ApiController extends AbstractController
                 'message' => 'Photo supprimée avec succès',
             ]);
         } catch (\Exception $e) {
-            return $this->json(['error' => $e->getMessage()], 500);
+            return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

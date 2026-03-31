@@ -16,6 +16,8 @@ interface ConfirmDeleteModalProps {
   onConfirm: () => void;
   user: User | null;
   isLoading?: boolean;
+  title?: string;
+  description?: React.ReactNode;
 }
 
 export default function ConfirmDeleteModal({
@@ -24,10 +26,25 @@ export default function ConfirmDeleteModal({
   onConfirm,
   user,
   isLoading = false,
+  title,
+  description,
 }: ConfirmDeleteModalProps) {
+  if (!user) return null;
+
+  const resolvedTitle = title ?? 'Supprimer la photo';
+  const resolvedDescription = description ?? (
+    <>
+      Voulez-vous vraiment supprimer la photo de{' '}
+      <span className="font-semibold text-gray-900 dark:text-white">
+        {user.firstName} {user.lastName}
+      </span>{' '}
+      ? Cette action est irréversible.
+    </>
+  );
+
   return (
     <AnimatePresence>
-      {isOpen && user && (
+      {isOpen && (
         <motion.div
           variants={overlayVariants}
           initial="hidden"
@@ -45,7 +62,7 @@ export default function ConfirmDeleteModal({
             {/* En-tête */}
             <div className="flex items-center justify-between rounded-t-xl border-b border-gray-200 bg-gray-50/50 px-5 py-4 dark:border-gray-700 dark:bg-gray-800/50">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Supprimer la photo
+                {resolvedTitle}
               </h3>
               <motion.button
                 onClick={onClose}
@@ -64,13 +81,7 @@ export default function ConfirmDeleteModal({
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
                   <AlertTriangle size={24} className="text-red-600 dark:text-red-400" />
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Voulez-vous vraiment supprimer la photo de{' '}
-                  <span className="font-semibold text-gray-900 dark:text-white">
-                    {user.firstName} {user.lastName}
-                  </span>{' '}
-                  ? Cette action est irréversible.
-                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{resolvedDescription}</p>
               </div>
 
               {/* Actions */}
@@ -87,9 +98,9 @@ export default function ConfirmDeleteModal({
                 <motion.button
                   onClick={onConfirm}
                   disabled={isLoading}
-                  whileHover={btnHover}
-                  whileTap={btnTap}
-                  className="flex items-center gap-2 rounded-lg border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
+                  whileHover={isLoading ? {} : btnHover}
+                  whileTap={isLoading ? {} : btnTap}
+                  className="inline-flex items-center gap-2 rounded-lg border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
                 >
                   {isLoading ? (
                     <>
@@ -113,7 +124,7 @@ export default function ConfirmDeleteModal({
                           d="M4 12a8 8 0 018-8v8H4z"
                         />
                       </svg>
-                      Suppression...
+                      Suppression…
                     </>
                   ) : (
                     'Supprimer'

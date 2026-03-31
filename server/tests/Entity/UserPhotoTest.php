@@ -11,11 +11,9 @@ class UserPhotoTest extends TestCase
     {
         $userPhoto = new UserPhoto();
 
-        // On vérifie que le setter retourne bien l'instance elle-même (fluent interface)
         $result = $userPhoto->setLdapUsername('dupont.j');
-        $this->assertSame($userPhoto, $result);
 
-        // On vérifie que la donnée a bien été assignée
+        $this->assertSame($userPhoto, $result);
         $this->assertSame('dupont.j', $userPhoto->getLdapUsername());
     }
 
@@ -33,7 +31,6 @@ class UserPhotoTest extends TestCase
     {
         $userPhoto = new UserPhoto();
 
-        // L'ID ne doit pas être défini à l'instanciation (il l'est par Doctrine après le flush)
         $this->assertNull($userPhoto->getId());
     }
 }

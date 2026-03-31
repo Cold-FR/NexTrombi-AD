@@ -1,4 +1,4 @@
-import { Mail, Phone, Camera, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Phone, Camera, Trash2, Eye, EyeOff, Pencil } from 'lucide-react';
 import { memo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { btnHover, btnTap, iconBtnHover, iconBtnTap } from '../lib/motionVariants';
@@ -15,6 +15,7 @@ export type User = {
   phone: string;
   photoUrl: string | null;
   hidden?: boolean;
+  isCustom?: boolean;
 };
 
 interface UserCardProps {
@@ -24,14 +25,9 @@ interface UserCardProps {
   onEditPhoto?: (userId: string) => void;
   onDeletePhoto?: (userId: string) => void;
   onToggleHidden?: (userId: string) => void;
+  onEditCustomUser?: (userId: string) => void;
+  onDeleteCustomUser?: (userId: string) => void;
 }
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
-
-const itemTransition = { type: 'spring' as const, stiffness: 300, damping: 22 };
 
 export default memo(function UserCard({
   user,
@@ -40,15 +36,20 @@ export default memo(function UserCard({
   onEditPhoto,
   onDeletePhoto,
   onToggleHidden,
+  onEditCustomUser,
+  onDeleteCustomUser,
 }: UserCardProps) {
-  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+  // Défense contre des champs undefined si le backend renvoie un objet incomplet
+  const firstName = user.firstName ?? '';
+  const lastName = user.lastName ?? '';
+  const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || '?';
+
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
     <motion.div
-      variants={itemVariants}
-      transition={itemTransition}
-      animate={{ opacity: user.hidden ? 0.4 : 1, y: 0 }}
+      animate={{ opacity: user.hidden ? 0.4 : 1 }}
+      transition={{ duration: 0.2 }}
       className={`h-full w-full rounded-xl border bg-white shadow-sm dark:bg-gray-800 ${
         user.hidden
           ? 'border-dashed border-gray-300 dark:border-gray-600'
@@ -68,7 +69,7 @@ export default memo(function UserCard({
               <SecureImage
                 className="h-24 w-24 rounded-full border-2 border-gray-50 object-cover shadow-sm dark:border-gray-700"
                 src={user.photoUrl}
-                alt={`Photo de ${user.firstName}`}
+                alt={`Photo de ${firstName}`}
               />
             </button>
           ) : (
@@ -123,12 +124,38 @@ export default memo(function UserCard({
           </motion.button>
         )}
 
+        {/* BOUTON MODIFIER (custom users uniquement, admin) — coin haut gauche */}
+        {isAdmin && user.isCustom && onEditCustomUser && (
+          <motion.button
+            onClick={() => onEditCustomUser(user.id)}
+            whileHover={iconBtnHover}
+            whileTap={iconBtnTap}
+            className="absolute top-3 left-3 rounded-full bg-gray-100 p-1.5 text-gray-400 shadow-sm ring-1 ring-gray-200 transition-colors hover:bg-gray-200 hover:text-gray-600 dark:bg-gray-700 dark:text-gray-500 dark:ring-gray-600 dark:hover:text-gray-300"
+            title="Modifier ce collaborateur"
+          >
+            <Pencil size={14} />
+          </motion.button>
+        )}
+
+        {/* BOUTON SUPPRIMER (custom users uniquement, admin) — coin haut gauche */}
+        {isAdmin && user.isCustom && onDeleteCustomUser && (
+          <motion.button
+            onClick={() => onDeleteCustomUser(user.id)}
+            whileHover={iconBtnHover}
+            whileTap={iconBtnTap}
+            className="absolute top-3 left-12 rounded-full bg-gray-100 p-1.5 text-gray-400 shadow-sm ring-1 ring-gray-200 transition-colors hover:bg-gray-200 hover:text-gray-600 dark:bg-gray-700 dark:text-gray-500 dark:ring-gray-600 dark:hover:text-gray-300"
+            title="Supprimer ce collaborateur"
+          >
+            <Trash2 size={14} />
+          </motion.button>
+        )}
+
         {/* INFORMATIONS */}
         <h5
           className="mb-1 line-clamp-2 w-full text-center text-xl font-medium text-gray-900 dark:text-white"
-          title={`${user.firstName} ${user.lastName}`}
+          title={`${firstName} ${lastName}`}
         >
-          {user.firstName} {user.lastName}
+          {firstName} {lastName}
         </h5>
         <span
           className="mb-3 line-clamp-3 flex min-h-10 w-full items-center justify-center text-center text-sm text-gray-500 dark:text-gray-400"
@@ -178,7 +205,7 @@ export default memo(function UserCard({
         {lightboxOpen && user.photoUrl && (
           <PhotoLightbox
             src={user.photoUrl}
-            alt={`Photo de ${user.firstName} ${user.lastName}`}
+            alt={`Photo de ${firstName} ${lastName}`}
             onClose={() => setLightboxOpen(false)}
           />
         )}
