@@ -2,6 +2,8 @@
 
 namespace App\Tests\Controller;
 
+use App\Entity\CustomUser;
+use App\Entity\UserIgnore;
 use App\Entity\UserPhoto;
 use App\Security\User;
 use App\Service\LdapConnection;
@@ -521,5 +523,315 @@ class ApiControllerTest extends WebTestCase
         $this->client->request('GET', '/api/photos/fichier_fantome_inexistant.webp');
 
         $this->assertResponseStatusCodeSame(404);
+    }
+
+    public function testGetUsersReturnsCustomUsersWithCorrectSorting(): void
+    {
+        // On simule un annuaire LDAP vide pour ne tester que les CustomUsers
+        $this->setupLdapFake()->expect(LdapFake::operation('search')->andReturn([]));
+
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $customUser1 = new CustomUser();
+        $customUser1->setFirstName('Alice');
+        $customUser1->setLastName('Zeta');
+        $customUser1->setEmail('alice@test.com');
+        $em->persist($customUser1);
+
+        $customUser2 = new CustomUser();
+        $customUser2->setFirstName('Bob');
+        $customUser2->setLastName('Alpha');
+        $customUser2->setEmail('bob@test.com');
+        $em->persist($customUser2);
+
+        // Charlie a le même nom de famille que Bob pour tester le tri secondaire (if 0 === $cmp)
+        $customUser3 = new CustomUser();
+        $customUser3->setFirstName('Charlie');
+        $customUser3->setLastName('Alpha');
+        $customUser3->setEmail('charlie@test.com');
+        $em->persist($customUser3);
+
+        $em->flush();
+
+        // Ajout d'une photo pour Alice
+        $photo = new UserPhoto();
+        $photo->setLdapUsername('custom_'.$customUser1->getId());
+        $photo->setPhotoFilename('alice.jpg');
+        $em->persist($photo);
+
+        // On masque Bob
+        $ignore = new UserIgnore();
+        $ignore->setUsername('custom_'.$customUser2->getId());
+        $em->persist($ignore);
+
+        $em->flush();
+
+        // 1. Test Admin : Voit tout le monde, trié correctement (Alpha B, Alpha C, Zeta A)
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+        $this->client->request('GET', '/api/users');
+
+        $this->assertResponseIsSuccessful();
+        $dataAdmin = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertCount(3, $dataAdmin);
+
+        // Bob Alpha (Caché)
+        $this->assertSame('custom_'.$customUser2->getId(), $dataAdmin[0]['id']);
+        $this->assertTrue($dataAdmin[0]['hidden']);
+
+        // Charlie Alpha (Visible)
+        $this->assertSame('custom_'.$customUser3->getId(), $dataAdmin[1]['id']);
+        $this->assertFalse($dataAdmin[1]['hidden']);
+
+        // Alice Zeta (Visible + Photo)
+        $this->assertSame('custom_'.$customUser1->getId(), $dataAdmin[2]['id']);
+        $this->assertFalse($dataAdmin[2]['hidden']);
+        $this->assertStringContainsString('alice.jpg', $dataAdmin[2]['photoUrl']);
+
+        static::ensureKernelShutdown();
+        $this->client = static::createClient();
+
+        $this->client->getContainer()->get(LdapConnection::class);
+        $this->setupLdapFake()->expect(LdapFake::operation('search')->andReturn([]));
+
+        // 2. Test User standard : Ne voit que les visibles (Charlie et Alice)
+        $this->client->loginUser(new User('regular_user', ['ROLE_USER']), 'api');
+        $this->client->request('GET', '/api/users');
+
+        $this->assertResponseIsSuccessful();
+        $dataUser = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertCount(2, $dataUser); // Bob est totalement retiré des résultats
+        $this->assertSame('custom_'.$customUser3->getId(), $dataUser[0]['id']); // Charlie
+        $this->assertSame('custom_'.$customUser1->getId(), $dataUser[1]['id']); // Alice
+        $this->assertArrayNotHasKey('hidden', $dataUser[0]); // Le flag 'hidden' ne fuite pas
+    }
+
+    public function testCreateCustomUserSuccess(): void
+    {
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $this->client->request('POST', '/api/custom-users', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'firstName' => 'John',
+            'lastName' => 'Doe',
+            'email' => 'john.d@test.com',
+            'jobTitle' => 'Testeur',
+            'department' => 'IT',
+            'phone' => '0102030405',
+        ]));
+
+        $this->assertResponseStatusCodeSame(201);
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Collaborateur créé avec succès !', $data['message']);
+        $this->assertArrayHasKey('userId', $data);
+    }
+
+    public function testCreateCustomUserMissingNameReturns400(): void
+    {
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $this->client->request('POST', '/api/custom-users', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'firstName' => '',
+            'lastName' => 'Doe',
+            'email' => 'john.doe@test.com',
+        ]));
+
+        $this->assertResponseStatusCodeSame(400);
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Le prénom et le nom sont obligatoires', $data['error']);
+    }
+
+    public function testCreateCustomUserInvalidEmailReturns400(): void
+    {
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $this->client->request('POST', '/api/custom-users', [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'firstName' => 'John',
+            'lastName' => 'Doe',
+            'email' => 'not-an-email',
+            'jobTitle' => '',
+            'department' => '',
+            'phone' => '',
+        ]));
+
+        $this->assertResponseStatusCodeSame(400);
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('E-mail incorrect', $data['error']);
+    }
+
+    public function testUpdateCustomUserSuccess(): void
+    {
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $customUser = new CustomUser();
+        $customUser->setFirstName('Old');
+        $customUser->setLastName('Name');
+        $customUser->setEmail('old@test.com');
+        $em->persist($customUser);
+        $em->flush();
+
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $this->client->request('PATCH', '/api/custom-users/'.$customUser->getId(), [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'firstName' => 'New',
+            'lastName' => 'Name',
+            'email' => 'new@test.com',
+            'jobTitle' => '',
+            'department' => '',
+            'phone' => '',
+        ]));
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Collaborateur mis à jour avec succès !', $data['message']);
+    }
+
+    public function testDeleteCustomUserSuccessWithRelations(): void
+    {
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $customUser = new CustomUser();
+        $customUser->setFirstName('To');
+        $customUser->setLastName('Delete');
+        $customUser->setEmail('delete@test.com');
+        $em->persist($customUser);
+        $em->flush();
+
+        $customId = $customUser->getId();
+        $ldapUsername = 'custom_'.$customId;
+
+        // On lui associe une exclusion
+        $ignore = new UserIgnore();
+        $ignore->setUsername($ldapUsername);
+        $em->persist($ignore);
+
+        // On lui associe une photo
+        $photo = new UserPhoto();
+        $photo->setLdapUsername($ldapUsername);
+        $photo->setPhotoFilename('custom_photo_del.jpg');
+        $em->persist($photo);
+        $em->flush();
+
+        // Création du faux fichier sur le disque
+        $uploadFolder = $this->client->getContainer()->getParameter('upload_folder');
+        file_put_contents($uploadFolder.'/custom_photo_del.jpg', 'fake image');
+
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+        $this->client->request('DELETE', '/api/custom-users/'.$customId);
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Collaborateur supprimé avec succès !', $data['message']);
+
+        // Vérification absolue du nettoyage (BDD + Système de fichiers)
+        $this->assertNull($em->getRepository(CustomUser::class)->find($customId));
+        $this->assertNull($em->getRepository(UserIgnore::class)->findOneBy(['username' => $ldapUsername]));
+        $this->assertNull($em->getRepository(UserPhoto::class)->findOneBy(['ldapUsername' => $ldapUsername]));
+        $this->assertFileDoesNotExist($uploadFolder.'/custom_photo_del.jpg');
+    }
+
+    public function testDeleteCustomUserSuccessWithoutRelations(): void
+    {
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $customUser = new CustomUser();
+        $customUser->setFirstName('No');
+        $customUser->setLastName('Relations');
+        $customUser->setEmail('norel@test.com');
+        $em->persist($customUser);
+        $em->flush();
+
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+        $this->client->request('DELETE', '/api/custom-users/'.$customUser->getId());
+
+        $this->assertResponseIsSuccessful();
+    }
+
+    public function testUploadPhotoForCustomUserForcesLocalModeEvenInAdMode(): void
+    {
+        // On force le Kernel à s'allumer en mode Active Directory
+        $client = $this->switchToAdMode();
+        $client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $tempFile = $this->createTempJpeg('test_custom_ad.jpg');
+        $uploadedFile = new UploadedFile($tempFile, 'photo.jpg', 'image/jpeg', null, true);
+
+        // On upload une photo pour un utilisateur "custom_"
+        $client->request('POST', '/api/users/custom_999/photo', [], ['photo' => $uploadedFile]);
+
+        $this->assertResponseIsSuccessful();
+        $data = json_decode($client->getResponse()->getContent(), true);
+
+        // On vérifie que la sauvegarde a été locale (présence de /api/photos/ dans l'url) et non binaire AD
+        $this->assertStringContainsString('/api/photos/', $data['photoUrl']);
+
+        unlink($tempFile);
+        $this->resetAdMode();
+    }
+
+    public function testDeletePhotoForCustomUserForcesLocalModeEvenInAdMode(): void
+    {
+        $client = $this->switchToAdMode();
+        $client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $em = $client->getContainer()->get('doctrine.orm.entity_manager');
+        $userPhoto = new UserPhoto();
+        $userPhoto->setLdapUsername('custom_888');
+        $userPhoto->setPhotoFilename('custom_888.webp');
+        $em->persist($userPhoto);
+        $em->flush();
+
+        // Même en mode AD, la suppression pour un "custom_" doit viser la BDD locale sans planter
+        $client->request('DELETE', '/api/users/custom_888/photo');
+
+        $this->assertResponseIsSuccessful();
+        $this->resetAdMode();
+    }
+
+    public function testUpdateCustomUserMissingNameReturns400(): void
+    {
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $customUser = new CustomUser();
+        $customUser->setFirstName('Old');
+        $customUser->setLastName('Name');
+        $customUser->setEmail('old@test.com');
+        $em->persist($customUser);
+        $em->flush();
+
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $this->client->request('PATCH', '/api/custom-users/'.$customUser->getId(), [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'firstName' => '', // Prénom manquant
+            'lastName' => 'Name',
+            'email' => 'new@test.com',
+        ]));
+
+        $this->assertResponseStatusCodeSame(400);
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('Le prénom et le nom sont obligatoires', $data['error']);
+    }
+
+    public function testUpdateCustomUserInvalidEmailReturns400(): void
+    {
+        $em = $this->client->getContainer()->get('doctrine.orm.entity_manager');
+
+        $customUser = new CustomUser();
+        $customUser->setFirstName('Old');
+        $customUser->setLastName('Name');
+        $customUser->setEmail('old@test.com');
+        $em->persist($customUser);
+        $em->flush();
+
+        $this->client->loginUser(new User('admin_user', ['ROLE_ADMIN']), 'api');
+
+        $this->client->request('PATCH', '/api/custom-users/'.$customUser->getId(), [], [], ['CONTENT_TYPE' => 'application/json'], json_encode([
+            'firstName' => 'New',
+            'lastName' => 'Name',
+            'email' => 'bad-email-format', // Email invalide
+        ]));
+
+        $this->assertResponseStatusCodeSame(400);
+        $data = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertSame('E-mail incorrect', $data['error']);
     }
 }
