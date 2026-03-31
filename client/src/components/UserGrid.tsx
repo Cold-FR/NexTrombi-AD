@@ -50,8 +50,8 @@ const SkeletonCard = () => (
 const AddUserCard = ({ onClick }: { onClick: () => void }) => (
   <motion.button
     onClick={onClick}
-    whileHover={{ scale: 1.02, y: -2 }}
-    whileTap={{ scale: 0.98, y: 0 }}
+    whileHover={{ y: -2 }}
+    whileTap={{ y: 1 }}
     transition={{ type: 'spring', stiffness: 300, damping: 22 }}
     className="group hover:border-primary-400 dark:hover:border-primary-500 flex h-full min-h-72 w-full flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-gray-300 bg-white shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700/50"
   >
