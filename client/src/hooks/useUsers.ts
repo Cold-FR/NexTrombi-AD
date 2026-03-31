@@ -243,11 +243,14 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       if (!token) return false;
 
       try {
-        const response = await fetch(`${apiBase()}/api/custom-users/${userId}`, {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(userData),
-        });
+        const response = await fetch(
+          `${apiBase()}/api/custom-users/${userId.replace('custom_', '')}`,
+          {
+            method: 'PATCH',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData),
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
