@@ -211,8 +211,8 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
                 id: data.userId,
                 firstName: userData.firstName,
                 lastName: userData.lastName,
-                jobTitle: userData.jobTitle,
-                department: userData.department,
+                jobTitle: userData.jobTitle === '' ? 'Agent' : userData.jobTitle,
+                department: userData.department === '' ? 'Non renseigné' : userData.department,
                 email: userData.email,
                 phone: userData.phone,
                 photoUrl: null,
@@ -263,8 +263,9 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
                       ...u,
                       firstName: userData.firstName,
                       lastName: userData.lastName,
-                      jobTitle: userData.jobTitle,
-                      department: userData.department,
+                      jobTitle: userData.jobTitle === '' ? 'Agent' : userData.jobTitle,
+                      department:
+                        userData.department === '' ? 'Non renseigné' : userData.department,
                       email: userData.email,
                       phone: userData.phone,
                     }
