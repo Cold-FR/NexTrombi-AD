@@ -193,7 +193,7 @@ class ApiController extends AbstractController
             return $this->json(['error' => $error], 400);
         }
 
-        return $this->json(['message' => 'Utilisateur ajouté avec succès !', 'userId' => $customUser->getId()], Response::HTTP_CREATED);
+        return $this->json(['message' => 'Collaborateur créé avec succès !', 'userId' => $customUser->getId()], Response::HTTP_CREATED);
     }
 
     #[IsGranted('ROLE_ADMIN')]
@@ -207,7 +207,7 @@ class ApiController extends AbstractController
             return $this->json(['error' => $error], 400);
         }
 
-        return $this->json(['message' => 'Utilisateur mis à jour avec succès !']);
+        return $this->json(['message' => 'Collaborateur mis à jour avec succès !']);
     }
 
     #[IsGranted('ROLE_ADMIN')]
@@ -217,7 +217,7 @@ class ApiController extends AbstractController
         $em->remove($user);
         $em->flush();
 
-        return $this->json(['message' => 'Utilisateur supprimé'], Response::HTTP_NO_CONTENT);
+        return $this->json(['message' => 'Collaborateur supprimé avec succès !'], Response::HTTP_NO_CONTENT);
     }
 
     /**
