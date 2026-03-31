@@ -25,7 +25,6 @@ interface UserCardProps {
   onEditPhoto?: (userId: string) => void;
   onDeletePhoto?: (userId: string) => void;
   onToggleHidden?: (userId: string) => void;
-  /** Ouvre le modal d'édition CustomUser — admin uniquement, custom users uniquement */
   onEditCustomUser?: (userId: string) => void;
 }
 
@@ -45,7 +44,11 @@ export default memo(function UserCard({
   onToggleHidden,
   onEditCustomUser,
 }: UserCardProps) {
-  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+  // Défense contre des champs undefined si le backend renvoie un objet incomplet
+  const firstName = user.firstName ?? '';
+  const lastName = user.lastName ?? '';
+  const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || '?';
+
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   return (
@@ -72,7 +75,7 @@ export default memo(function UserCard({
               <SecureImage
                 className="h-24 w-24 rounded-full border-2 border-gray-50 object-cover shadow-sm dark:border-gray-700"
                 src={user.photoUrl}
-                alt={`Photo de ${user.firstName}`}
+                alt={`Photo de ${firstName}`}
               />
             </button>
           ) : (
@@ -143,9 +146,9 @@ export default memo(function UserCard({
         {/* INFORMATIONS */}
         <h5
           className="mb-1 line-clamp-2 w-full text-center text-xl font-medium text-gray-900 dark:text-white"
-          title={`${user.firstName} ${user.lastName}`}
+          title={`${firstName} ${lastName}`}
         >
-          {user.firstName} {user.lastName}
+          {firstName} {lastName}
         </h5>
         <span
           className="mb-3 line-clamp-3 flex min-h-10 w-full items-center justify-center text-center text-sm text-gray-500 dark:text-gray-400"
@@ -195,7 +198,7 @@ export default memo(function UserCard({
         {lightboxOpen && user.photoUrl && (
           <PhotoLightbox
             src={user.photoUrl}
-            alt={`Photo de ${user.firstName} ${user.lastName}`}
+            alt={`Photo de ${firstName} ${lastName}`}
             onClose={() => setLightboxOpen(false)}
           />
         )}
