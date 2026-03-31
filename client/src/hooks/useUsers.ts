@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { type User } from '../components/UserCard';
+import { type CustomUserFormData } from '../components/CustomUserModal';
 import { clearImageCache } from '../lib/imageCache';
 
 const USERS_CACHE_KEY = 'trombinoscope_users_cache';
@@ -17,6 +18,17 @@ interface CachedUsers {
   timestamp: number;
 }
 
+const API_BASE = () => import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+
+/** Met à jour le cache sessionStorage et retourne la liste mise à jour */
+function updateCache(updated: User[]): User[] {
+  sessionStorage.setItem(
+    USERS_CACHE_KEY,
+    JSON.stringify({ data: updated, timestamp: Date.now() } satisfies CachedUsers)
+  );
+  return updated;
+}
+
 export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOptions) {
   const [users, setUsers] = useState<User[]>(() => {
     try {
@@ -29,27 +41,29 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
     }
   });
 
-  const fetchUsers = useCallback(
-    async (signal?: AbortSignal, forceRefresh = false) => {
-      if (!token) return;
+  // Chargement initial
+  useEffect(() => {
+    if (!token) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUsers([]);
+      sessionStorage.removeItem(USERS_CACHE_KEY);
+      return;
+    }
 
-      // Si on ne force pas le rafraîchissement, on vérifie le cache
-      if (!forceRefresh) {
-        const cached = sessionStorage.getItem(USERS_CACHE_KEY);
-        if (cached) {
-          const { timestamp } = JSON.parse(cached) as CachedUsers;
-          if (Date.now() - timestamp < USERS_CACHE_TTL) return;
-        }
-      }
+    const cached = sessionStorage.getItem(USERS_CACHE_KEY);
+    if (cached) {
+      const { timestamp } = JSON.parse(cached) as CachedUsers;
+      if (Date.now() - timestamp < USERS_CACHE_TTL) return;
+    }
 
+    const controller = new AbortController();
+
+    const fetchUsers = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-            signal,
-          }
-        );
+        const response = await fetch(`${API_BASE()}/api/users`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
 
         if (response.status === 401) {
           onLogout();
@@ -59,33 +73,23 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
 
         const data: User[] = await response.json();
         setUsers(data);
-        sessionStorage.setItem(
-          USERS_CACHE_KEY,
-          JSON.stringify({ data, timestamp: Date.now() } satisfies CachedUsers)
-        );
+        updateCache(data);
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
         onError("Impossible de charger l'annuaire.");
       }
-    },
-    [token, onLogout, onError]
-  );
-
-  useEffect(() => {
-    if (!token) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUsers([]);
-      sessionStorage.removeItem(USERS_CACHE_KEY);
-      return;
-    }
-
-    const controller = new AbortController();
-    fetchUsers(controller.signal);
-
-    return () => {
-      controller.abort();
     };
-  }, [token, fetchUsers]);
+
+    fetchUsers();
+    return () => controller.abort();
+  }, [token, onLogout, onError]);
+
+  const authHeaders = useCallback(() => ({ Authorization: `Bearer ${token}` }), [token]);
+
+  const handle401 = useCallback(() => {
+    onLogout();
+    onError('Session expirée, veuillez vous reconnecter.');
+  }, [onLogout, onError]);
 
   const handleSavePhoto = useCallback(
     async (userId: string, file: File) => {
@@ -95,47 +99,36 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       formData.append('photo', file);
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users/${userId}/photo`,
-          {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            body: formData,
-          }
-        );
+        const response = await fetch(`${API_BASE()}/api/users/${userId}/photo`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: formData,
+        });
 
         if (response.ok) {
           const data = await response.json();
           const oldUser = users.find((u) => u.id === userId);
           if (oldUser?.photoUrl) clearImageCache(oldUser.photoUrl);
 
-          setUsers((prev) => {
-            const updated = prev.map((u) =>
-              u.id === userId ? { ...u, photoUrl: data.photoUrl } : u
-            );
-            sessionStorage.setItem(
-              USERS_CACHE_KEY,
-              JSON.stringify({ data: updated, timestamp: Date.now() } satisfies CachedUsers)
-            );
-            return updated;
-          });
+          setUsers((prev) =>
+            updateCache(prev.map((u) => (u.id === userId ? { ...u, photoUrl: data.photoUrl } : u)))
+          );
           onSuccess('Photo mise à jour avec succès.');
           return true;
-        } else if (response.status === 401) {
-          onLogout();
-          onError('Session expirée, veuillez vous reconnecter.');
-          return false;
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          onError(errorData.error ?? "Impossible d'enregistrer la photo.");
+        }
+        if (response.status === 401) {
+          handle401();
           return false;
         }
+        const err = await response.json().catch(() => ({}));
+        onError(err.error ?? "Impossible d'enregistrer la photo.");
+        return false;
       } catch {
         onError("Erreur réseau lors de l'envoi de la photo.");
         return false;
       }
     },
-    [token, users, onSuccess, onError, onLogout]
+    [token, users, authHeaders, handle401, onSuccess, onError]
   );
 
   const handleDeletePhoto = useCallback(
@@ -143,43 +136,34 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       if (!token) return false;
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users/${userId}/photo`,
-          {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await fetch(`${API_BASE()}/api/users/${userId}/photo`, {
+          method: 'DELETE',
+          headers: authHeaders(),
+        });
 
         if (response.ok) {
           const oldUser = users.find((u) => u.id === userId);
           if (oldUser?.photoUrl) clearImageCache(oldUser.photoUrl);
 
-          setUsers((prev) => {
-            const updated = prev.map((u) => (u.id === userId ? { ...u, photoUrl: null } : u));
-            sessionStorage.setItem(
-              USERS_CACHE_KEY,
-              JSON.stringify({ data: updated, timestamp: Date.now() } satisfies CachedUsers)
-            );
-            return updated;
-          });
+          setUsers((prev) =>
+            updateCache(prev.map((u) => (u.id === userId ? { ...u, photoUrl: null } : u)))
+          );
           onSuccess('Photo supprimée avec succès.');
           return true;
-        } else if (response.status === 401) {
-          onLogout();
-          onError('Session expirée, veuillez vous reconnecter.');
-          return false;
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          onError(errorData.error ?? 'Impossible de supprimer la photo.');
+        }
+        if (response.status === 401) {
+          handle401();
           return false;
         }
+        const err = await response.json().catch(() => ({}));
+        onError(err.error ?? 'Impossible de supprimer la photo.');
+        return false;
       } catch {
         onError('Erreur réseau lors de la suppression.');
         return false;
       }
     },
-    [token, users, onSuccess, onError, onLogout]
+    [token, users, authHeaders, handle401, onSuccess, onError]
   );
 
   const handleToggleHidden = useCallback(
@@ -187,30 +171,19 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
       if (!token) return;
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/users/${userId}/ignore`,
-          {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const response = await fetch(`${API_BASE()}/api/users/${userId}/ignore`, {
+          method: 'POST',
+          headers: authHeaders(),
+        });
 
         if (response.ok) {
           const data = (await response.json()) as { hidden: boolean };
-
-          setUsers((prev) => {
-            const updated = prev.map((u) => (u.id === userId ? { ...u, hidden: data.hidden } : u));
-            sessionStorage.setItem(
-              USERS_CACHE_KEY,
-              JSON.stringify({ data: updated, timestamp: Date.now() } satisfies CachedUsers)
-            );
-            return updated;
-          });
-
+          setUsers((prev) =>
+            updateCache(prev.map((u) => (u.id === userId ? { ...u, hidden: data.hidden } : u)))
+          );
           onSuccess(data.hidden ? 'Utilisateur masqué.' : 'Utilisateur visible à nouveau.');
         } else if (response.status === 401) {
-          onLogout();
-          onError('Session expirée, veuillez vous reconnecter.');
+          handle401();
         } else {
           onError("Impossible de modifier la visibilité de l'utilisateur.");
         }
@@ -218,46 +191,94 @@ export function useUsers({ token, onLogout, onSuccess, onError }: UseUsersOption
         onError('Erreur réseau.');
       }
     },
-    [token, onSuccess, onError, onLogout]
+    [token, authHeaders, handle401, onSuccess, onError]
   );
 
   const handleCreateCustomUser = useCallback(
-    async (userData: unknown) => {
+    async (userData: CustomUserFormData): Promise<boolean> => {
       if (!token) return false;
 
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/custom-users`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(userData),
-          }
-        );
+        const response = await fetch(`${API_BASE()}/api/custom-users`, {
+          method: 'POST',
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData),
+        });
 
         if (response.ok) {
-          onSuccess('Utilisateur créé avec succès.');
-
-          await fetchUsers(undefined, true);
+          const newUser: User = await response.json();
+          setUsers((prev) => updateCache([...prev, newUser]));
+          onSuccess('Collaborateur ajouté avec succès.');
           return true;
-        } else if (response.status === 401) {
-          onLogout();
-          onError('Session expirée, veuillez vous reconnecter.');
-          return false;
-        } else {
-          onError("Impossible de créer l'utilisateur.");
+        }
+        if (response.status === 401) {
+          handle401();
           return false;
         }
+        const err = await response.json().catch(() => ({}));
+        onError(err.error ?? 'Impossible de créer le collaborateur.');
+        return false;
       } catch {
         onError('Erreur réseau.');
         return false;
       }
     },
-    [token, onSuccess, onError, onLogout, fetchUsers]
+    [token, authHeaders, handle401, onSuccess, onError]
   );
 
-  return { users, handleSavePhoto, handleDeletePhoto, handleToggleHidden, handleCreateCustomUser };
+  const handleUpdateCustomUser = useCallback(
+    async (userId: string, userData: CustomUserFormData): Promise<boolean> => {
+      if (!token) return false;
+
+      try {
+        const response = await fetch(`${API_BASE()}/api/custom-users/${userId}`, {
+          method: 'PATCH',
+          headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify(userData),
+        });
+
+        if (response.ok) {
+          setUsers((prev) =>
+            updateCache(
+              prev.map((u) =>
+                u.id === userId
+                  ? {
+                      ...u,
+                      firstName: userData.firstName,
+                      lastName: userData.lastName,
+                      jobTitle: userData.jobTitle,
+                      department: userData.department,
+                      email: userData.email,
+                      phone: userData.phone,
+                    }
+                  : u
+              )
+            )
+          );
+          onSuccess('Collaborateur mis à jour avec succès.');
+          return true;
+        }
+        if (response.status === 401) {
+          handle401();
+          return false;
+        }
+        const err = await response.json().catch(() => ({}));
+        onError(err.error ?? 'Impossible de mettre à jour le collaborateur.');
+        return false;
+      } catch {
+        onError('Erreur réseau.');
+        return false;
+      }
+    },
+    [token, authHeaders, handle401, onSuccess, onError]
+  );
+
+  return {
+    users,
+    handleSavePhoto,
+    handleDeletePhoto,
+    handleToggleHidden,
+    handleCreateCustomUser,
+    handleUpdateCustomUser,
+  };
 }
