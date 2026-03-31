@@ -372,10 +372,12 @@ class ApiController extends AbstractController
 
                 // On cherche l'utilisateur dans l'AD
                 $user = User::findBy('samaccountname', $ldapUsername);
-                if ($user) {
-                    $user->thumbnailphoto = null;
-                    $user->save();
+                if (!$user) {
+                    return $this->json(['error' => 'Utilisateur introuvable dans l\'AD.'], 404);
                 }
+
+                $user->thumbnailphoto = null;
+                $user->save();
             } else {
                 // --- MODE LOCAL (Base de données) ---
                 // On cherche s'il a déjà une photo en base
