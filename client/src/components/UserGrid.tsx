@@ -1,4 +1,4 @@
-import { SearchX } from 'lucide-react';
+import { SearchX, UserPlus } from 'lucide-react';
 import { memo, useEffect, useState, useMemo } from 'react';
 import UserCard, { type User } from './UserCard';
 import { AnimatePresence, motion } from 'motion/react';
@@ -45,6 +45,30 @@ const SkeletonCard = () => (
       <div className="h-9 w-10 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700" />
     </div>
   </div>
+);
+
+const AddUserCard = ({ onClick }: { onClick: () => void }) => (
+  <motion.button
+    onClick={onClick}
+    whileHover={{ scale: 1.02, y: -2 }}
+    whileTap={{ scale: 0.98, y: 0 }}
+    transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+    className="group hover:border-primary-400 dark:hover:border-primary-500 flex h-full min-h-72 w-full flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed border-gray-300 bg-white shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700/50"
+  >
+    <div className="group-hover:bg-primary-100 dark:bg-primary-900/20 dark:group-hover:bg-primary-900/40 group-hover:border-primary-300 dark:group-hover:border-primary-700 flex h-24 w-24 items-center justify-center rounded-full border-2 border-dashed border-gray-200 transition-colors dark:border-gray-600">
+      <UserPlus
+        size={32}
+        className="group-hover:text-primary-600 dark:group-hover:text-primary-400 text-gray-400 transition-colors dark:text-gray-500"
+      />
+    </div>
+
+    <div className="text-center">
+      <p className="group-hover:text-primary-700 dark:group-hover:text-primary-400 text-base font-medium text-gray-700 transition-colors dark:text-gray-300">
+        Ajouter un collaborateur
+      </p>
+      <p className="mt-1 text-sm text-gray-400 dark:text-gray-500">Créer un profil manuellement</p>
+    </div>
+  </motion.button>
 );
 
 function useResponsiveColumns() {
@@ -196,32 +220,7 @@ export default memo(function UserGrid({
                     if (user.isFakeCard) {
                       return (
                         <motion.div key="add-btn" variants={itemVariants} className="h-full">
-                          <motion.button
-                            onClick={() => setModalOpen(true)}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="group hover:border-primary-500 hover:bg-primary-50 hover:text-primary-600 dark:hover:border-primary-500 dark:hover:bg-primary-900/20 flex h-full min-h-75 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50/50 text-gray-400 transition-colors dark:border-gray-700 dark:bg-gray-800/50"
-                          >
-                            <div className="rounded-full bg-white p-4 shadow-sm transition-transform group-hover:scale-110 dark:bg-gray-800">
-                              <SearchX size={32} className="hidden" />{' '}
-                              {/* Hack pour importer Lucide si besoin */}
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="32"
-                                height="32"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M5 12h14" />
-                                <path d="M12 5v14" />
-                              </svg>
-                            </div>
-                            <span className="mt-4 font-medium">Ajouter un collaborateur</span>
-                          </motion.button>
+                          <AddUserCard onClick={() => setModalOpen(true)} />
                         </motion.div>
                       );
                     }

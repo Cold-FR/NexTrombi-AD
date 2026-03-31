@@ -27,7 +27,6 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
     phone: '',
   });
 
-  // Fermeture avec Échap
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -52,7 +51,7 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
 
   return createPortal(
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm dark:bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm"
       variants={overlayVariants}
       initial="hidden"
       animate="show"
@@ -60,23 +59,24 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
       onClick={onClose}
     >
       <motion.div
-        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800"
+        className="relative w-full max-w-md overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800"
         variants={modalVariants}
         initial="hidden"
         animate="show"
         exit="exit"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-gray-700">
+        <div className="flex items-center justify-between rounded-t-xl border-b border-gray-200 bg-gray-50/50 px-5 py-4 dark:border-gray-700 dark:bg-gray-800/50">
           <div className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
             <UserPlus size={20} className="text-primary-600 dark:text-primary-500" />
-            Créer un utilisateur
+            Créer un collaborateur
           </div>
           <motion.button
             whileHover={iconBtnHover}
             whileTap={iconBtnTap}
             onClick={onClose}
-            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
+            aria-label="Fermer"
           >
             <X size={20} />
           </motion.button>
@@ -86,7 +86,7 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Prénom *
+                Prénom <span className="text-red-500">*</span>
               </label>
               <input
                 placeholder="Jean"
@@ -94,12 +94,12 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
               />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Nom *
+                Nom <span className="text-red-500">*</span>
               </label>
               <input
                 placeholder="Dupont"
@@ -107,7 +107,7 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className="focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                className="focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
               />
             </div>
           </div>
@@ -121,7 +121,7 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
               name="jobTitle"
               value={formData.jobTitle}
               onChange={handleChange}
-              className="focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
             />
           </div>
 
@@ -134,21 +134,22 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
               name="department"
               value={formData.department}
               onChange={handleChange}
-              className="focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
             />
           </div>
 
           <div className="mt-4">
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Email
+              E-mail <span className="text-red-500">*</span>
             </label>
             <input
+              required
               placeholder="dupont.j@ste-savine.fr"
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
             />
           </div>
 
@@ -161,17 +162,18 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className="focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="focus:border-primary-500 focus:ring-primary-500 dark:focus:border-primary-500 dark:focus:ring-primary-500 w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 transition-colors placeholder:text-gray-400 focus:ring-1 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
             />
           </div>
 
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-4 dark:border-gray-700">
             <motion.button
               type="button"
               onClick={onClose}
+              disabled={loading}
               whileHover={btnHover}
               whileTap={btnTap}
-              className="hover:text-primary-700 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
             >
               Annuler
             </motion.button>
@@ -180,14 +182,10 @@ export function CustomUserModal({ onClose, onSubmit }: CustomUserModalProps) {
               disabled={loading}
               whileHover={loading ? {} : btnHover}
               whileTap={loading ? {} : btnTap}
-              className="bg-primary-600 hover:bg-primary-700 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 inline-flex items-center rounded-lg px-5 py-2.5 text-center text-sm font-medium text-white focus:ring-4 focus:outline-none disabled:opacity-70"
+              className="bg-primary-600 hover:bg-primary-700 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors focus:ring-4 focus:outline-none disabled:opacity-70"
             >
-              {loading ? (
-                <Loader2 size={18} className="mr-2 animate-spin" />
-              ) : (
-                <UserPlus size={18} className="mr-2" />
-              )}
-              Créer
+              {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+              {loading ? 'Création…' : 'Créer'}
             </motion.button>
           </div>
         </form>
