@@ -125,7 +125,7 @@ class ApiControllerTest extends WebTestCase
         $this->client->request('GET', '/api/users');
 
         $this->assertResponseStatusCodeSame(503);
-        $this->assertStringContainsString('Erreur LDAP', $this->client->getResponse()->getContent());
+        $this->assertStringContainsString('Connexion LDAP impossible', $this->client->getResponse()->getContent());
     }
 
     public function testGetUsersReturnsSuccess(): void

@@ -159,7 +159,7 @@ class ApiController extends AbstractController
 
             return $this->json($users);
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Erreur : '.$e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            return $this->json(['error' => 'Erreur : '.$e->getMessage()], Response::HTTP_SERVICE_UNAVAILABLE);
         }
     }
 
